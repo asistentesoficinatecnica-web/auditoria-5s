@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="App de Auditorías 5S - Sistema de evaluación de planta">
+<title>Auditorías 5S</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f7fa;--bg3:#eef1f6;
+  --text:#1a1d23;--text2:#5a6173;--text3:#8892a4;
+  --border:#dde1ea;--border2:#c8cdd8;
+  --blue:#3266ad;--blue2:#285699;--blue-bg:#e8f0fb;
+  --green:#1a7340;--green-bg:#eaf3de;--green2:#27ae60;
+  --orange:#8b5e00;--orange-bg:#faeeda;--orange2:#f39c12;
+  --red:#8b1c1c;--red-bg:#fcebeb;--red2:#e74c3c;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;color:var(--text);background:var(--bg2);min-height:100vh}
+
+/* ── LAYOUT ── */
+.app{max-width:700px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg)}
+.nav{display:flex;gap:0;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;overflow-x:auto}
+.nav button{flex:1;min-width:70px;background:transparent;border:none;padding:14px 8px 12px;font-size:12px;color:var(--text2);cursor:pointer;border-bottom:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s;white-space:nowrap}
+.nav button i{font-size:18px}
+.nav button.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.nav button:hover:not(.active){color:var(--text);background:var(--bg2)}
+.content{flex:1;padding:16px;overflow-y:auto}
+.view{display:none}.view.active{display:block}
+
+/* ── TIPOGRAFÍA ── */
+h2{font-size:20px;font-weight:600;margin-bottom:4px}
+h3{font-size:15px;font-weight:600;margin-bottom:10px}
+.sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+label{font-size:13px;color:var(--text2);display:block;margin-bottom:5px;font-weight:500}
+
+/* ── FORM ── */
+input,select,textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:14px;color:var(--text);background:var(--bg);margin-bottom:0;
+  transition:border-color .15s;font-family:inherit;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(50,102,173,.12)}
+textarea{resize:vertical;min-height:60px}
+
+/* ── BOTONES ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;font-size:14px;font-weight:500;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.btn:hover{background:var(--bg2);border-color:var(--text3)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:var(--blue2);border-color:var(--blue2)}
+.btn-sm{padding:7px 13px;font-size:13px}
+.btn-danger{border-color:#e8b4b4;color:var(--red)}
+.btn-danger:hover{background:var(--red-bg)}
+.btn-full{width:100%;padding:14px}
+
+/* ── CARDS ── */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-flat{background:var(--bg2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-ok{background:var(--green-bg);color:var(--green)}
+.badge-warn{background:var(--orange-bg);color:var(--orange)}
+.badge-bad{background:var(--red-bg);color:var(--red)}
+.badge-info{background:var(--blue-bg);color:var(--blue)}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rb{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.gap12{display:flex;flex-direction:column;gap:12px}
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* ── MÉTRICAS ── */
+.met{background:var(--bg2);border-radius:var(--radius-sm);padding:14px 8px;text-align:center;border:1px solid var(--border)}
+.met-v{font-size:24px;font-weight:700;line-height:1.1}
+.met-l{font-size:11px;color:var(--text2);margin-top:3px;font-weight:500}
+
+/* ── PROGRESS ── */
+.pw{width:100%;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.pf{height:100%;border-radius:4px;transition:width .4s ease}
+
+/* ── SYNC STATUS ── */
+.sync-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:16px;font-weight:500}
+.sync-ok{background:var(--green-bg);color:var(--green)}
+.sync-err{background:var(--red-bg);color:var(--red)}
+.sync-loading{background:var(--blue-bg);color:var(--blue)}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sync-dot.ok{background:var(--green2)}
+.sync-dot.err{background:var(--red2)}
+.sync-dot.spin{background:var(--blue);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ── STEPS ── */
+.steps{display:flex;margin-bottom:20px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)}
+.step{flex:1;text-align:center;font-size:12px;padding:10px 4px;color:var(--text2);border-right:1px solid var(--border);background:var(--bg2);font-weight:500}
+.step:last-child{border-right:none}
+.step.done{background:var(--green-bg);color:var(--green)}
+.step.active{background:var(--blue-bg);color:var(--blue);font-weight:700}
+
+/* ── TABS S ── */
+.stab-wrap{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.stab{padding:8px 16px;font-size:13px;font-weight:600;border:1.5px solid var(--border);border-radius:20px;background:var(--bg);cursor:pointer;color:var(--text2);transition:all .15s;display:flex;align-items:center;gap:5px}
+.stab-cnt{font-size:10px;opacity:.7}
+
+/* ── CHECKLIST ITEM ── */
+.cl-item{border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;transition:all .2s;background:var(--bg)}
+.cl-item.ans-si{border-color:var(--green2);border-left:4px solid var(--green2)}
+.cl-item.ans-no{border-color:var(--red2);border-left:4px solid var(--red2)}
+.cl-item.no-foto{background:#fffbf5;border-color:var(--orange2)}
+.cl-hdr{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.cl-num{background:var(--blue-bg);color:var(--blue);border-radius:50%;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.cl-txt{font-size:14px;line-height:1.55;padding-top:2px}
+.s-section-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:12px;font-weight:600;font-size:14px}
+
+/* ── SÍ/NO ── */
+.yn-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.yn-btn{padding:14px 8px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--bg2);cursor:pointer;font-size:16px;font-weight:700;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.yn-btn:hover{border-color:var(--blue);background:var(--blue-bg)}
+.yn-si.sel{background:var(--green-bg);border-color:var(--green2);color:var(--green)}
+.yn-no.sel{background:var(--red-bg);border-color:var(--red2);color:var(--red)}
+
+/* ── FOTO ── */
+.foto-req{background:#fff8e6;border:1.5px dashed #e67e22;border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;font-size:13px;color:#7a4a05}
+.foto-req-title{display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:3px}
+.photo-zone{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.photo-add-btn{border:1.5px dashed var(--border2);border-radius:var(--radius-sm);padding:8px 14px;font-size:13px;color:var(--text2);background:var(--bg);cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;transition:all .15s}
+.photo-add-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.photo-add-btn.req{border-color:#e67e22;color:#7a4a05;background:#fff8e6}
+.photo-thumb{width:60px;height:60px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border)}
+.photo-wrap{position:relative;display:inline-block}
+.photo-del{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red2);border:none;color:#fff;font-size:12px;cursor:pointer;line-height:20px;text-align:center;padding:0;font-weight:700}
+
+/* ── HISTORIAL ── */
+.hist-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.s-mini{flex:1;min-width:60px}
+.s-mini-lbl{font-size:10px;color:var(--text2);margin-bottom:3px;font-weight:600;text-transform:uppercase}
+.ar-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.ar-row:last-child{border-bottom:none}
+
+/* ── AREA TAG ── */
+.area-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;margin:3px;font-weight:500}
+.del-x{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px}
+.del-x:hover{color:var(--red2)}
+
+/* ── CL INFO BADGE ── */
+.cl-info-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--blue-bg);color:var(--blue);margin-top:6px}
+
+/* ── FOTO ALERTA BANNER ── */
+.foto-banner{background:#fff8e6;border:1.5px solid #e67e22;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:#7a4a05;margin-bottom:12px;font-weight:500;display:flex;align-items:center;gap:8px}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:50px 20px;color:var(--text2)}
+.empty-icon{font-size:44px;margin-bottom:12px;color:var(--text3)}
+.empty p{font-size:14px;margin-top:6px;line-height:1.5}
+
+/* ── PILLS 5S ── */
+.pills-5s{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600}
+
+#photoInput{display:none}
+
+/* ── RESPONSIVE ── */
+@media(max-width:400px){
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .nav button span{display:none}
+  .nav button{min-width:50px}
+}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
+</head>
+<body>
+
+<div class="app">
+
+  <nav class="nav">
+    <button class="active" onclick="nav('inicio')">
+      <i class="ti ti-home"></i><span>Inicio</span>
+    </button>
+    <button onclick="nav('nueva')">
+      <i class="ti ti-clipboard-plus"></i><span>Nueva</span>
+    </button>
+    <button onclick="nav('historial')">
+      <i class="ti ti-history"></i><span>Historial</span>
+    </button>
+    <button onclick="nav('estadisticas')">
+      <i class="ti ti-chart-bar"></i><span>Estadísticas</span>
+    </button>
+  </nav>
+
+  <div class="content">
+
+    <!-- ══════════ INICIO ══════════ -->
+    <div id="view-inicio" class="view active">
+      <div id="sync-status" class="sync-bar sync-loading">
+        <div class="sync-dot spin"></div>
+        <span>Conectando con Google Sheets...</span>
+      </div>
+      <div class="rb" style="margin-bottom:18px">
+        <div>
+          <h2>Auditorías 5S</h2>
+          <p class="sub" style="margin:0">Evaluación continua de planta</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="nav('nueva')">
+          <i class="ti ti-plus"></i> Nueva
+        </button>
+      </div>
+      <div class="g4" id="inicio-kpis" style="margin-bottom:18px"></div>
+      <div class="divider"></div>
+      <div class="rb" style="margin-bottom:12px">
+        <h3 style="margin:0">Últimas auditorías</h3>
+        <button class="btn btn-sm" onclick="cargarDatos();nav('historial')">
+          Ver todas <i class="ti ti-arrow-right"></i>
+        </button>
+      </div>
+      <div id="inicio-lista"></div>
+      <div class="divider"></div>
+      <div class="pills-5s">
+        <span class="pill" style="background:#e6f1fb;color:#0c447c">① Seiri — Clasificar</span>
+        <span class="pill" style="background:#eaf3de;color:#27500a">② Seiton — Ordenar</span>
+        <span class="pill" style="background:#faeeda;color:#633806">③ Seiso — Orden y Limpieza</span>
+      </div>
+    </div>
+
+    <!-- ══════════ NUEVA AUDITORÍA ══════════ -->
+    <div id="view-nueva" class="view">
+
+      <!-- PASO 1 -->
+      <div id="paso1">
+        <div class="steps">
+          <div class="step active">① Datos</div>
+          <div class="step">② Evaluación</div>
+          <div class="step">③ Resultado</div>
+        </div>
+        <h2 style="margin-bottom:4px">¿Quién audita y dónde?</h2>
+        <p class="sub">Completa todos los datos antes de iniciar</p>
+        <div class="gap12" style="margin-bottom:16px">
+          <div class="g2">
+            <div>
+              <label>Nombre del auditor</label>
+              <input id="p1-auditor" type="text" placeholder="Tu nombre completo">
+            </div>
+            <div>
+              <label>Fecha</label>
+              <input id="p1-fecha" type="date">
+            </div>
+          </div>
+          <div class="g2">
+            <div>
+              <label>Sección</label>
+              <select id="p1-sec" onchange="fillAreas()"></select>
+            </div>
+            <div>
+              <label>Área</label>
+              <select id="p1-area" onchange="showCLInfo()"></select>
+              <div id="cl-info" class="cl-info-badge" style="display:none"></div>
+            </div>
+          </div>
+          <div>
+            <label>Observaciones iniciales (opcional)</label>
+            <textarea id="p1-notas" placeholder="Turno, condiciones especiales, etc."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="goEval()">
+          <i class="ti ti-arrow-right"></i> Comenzar evaluación
+        </button>
+      </div>
+
+      <!-- PASO 2 -->
+      <div id="paso2" style="display:none">
+        <div class="steps">
+          <div class="step done">① Datos ✓</div>
+          <div class="step active">② Evaluación</div>
+          <div class="step">③ Resultado</div>
+        </div>
+        <div class="rb" style="margin-bottom:6px">
+          <div>
+            <h2 style="margin:0;font-size:17px" id="eval-titulo"></h2>
+            <p style="font-size:13px;color:var(--text2)" id="eval-sub"></p>
+          </div>
+          <span class="badge badge-info" id="eval-prog"></span>
+        </div>
+        <div class="pw" style="margin-bottom:14px">
+          <div class="pf" id="eval-pb" style="width:0%;background:var(--blue)"></div>
+        </div>
+        <div id="foto-banner" class="foto-banner" style="display:none">
+          <i class="ti ti-alert-triangle"></i>
+          <span id="foto-banner-txt"></span>
+        </div>
+        <div class="stab-wrap" id="stabs"></div>
+        <div id="eval-items"></div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn" onclick="goP1()">
+            <i class="ti ti-arrow-left"></i> Atrás
+          </button>
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardar()" style="flex:1">
+            <i class="ti ti-device-floppy"></i> Guardar auditoría
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 3 -->
+      <div id="paso3" style="display:none">
+        <div class="steps">
+          <div class="step done">① Datos ✓</div>
+          <div class="step done">② Evaluación ✓</div>
+          <div class="step active">③ Resultado</div>
+        </div>
+        <div style="text-align:center;padding:24px 0 16px">
+          <i class="ti ti-circle-check" style="font-size:56px;color:var(--green)"></i>
+          <h2 style="margin:14px 0 4px">¡Auditoría guardada!</h2>
+          <p id="p3-resumen" style="font-size:13px;color:var(--text2);margin-bottom:8px"></p>
+          <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--green);margin-bottom:18px;font-weight:600">
+            <i class="ti ti-brand-google-drive"></i> Guardado en Google Sheets ✓
+          </div>
+          <div style="font-size:48px;font-weight:800;line-height:1" id="p3-pct"></div>
+          <div style="font-size:18px;color:var(--text2);margin-bottom:4px">%</div>
+          <p style="font-size:13px;color:var(--text2);font-weight:500" id="p3-nivel"></p>
+        </div>
+        <div class="g3" id="p3-byS" style="margin-bottom:16px"></div>
+        <div id="p3-nos" style="margin-bottom:16px"></div>
+        <div class="gap12">
+          <button class="btn btn-primary btn-full" onclick="resetNueva()">
+            <i class="ti ti-plus"></i> Nueva auditoría
+          </button>
+          <div style="display:flex;gap:10px">
+            <button class="btn" style="flex:1" onclick="cargarDatos();nav('historial')">
+              <i class="ti ti-history"></i> Historial
+            </button>
+            <button class="btn" style="flex:1" onclick="cargarDatos();nav('estadisticas')">
+              <i class="ti ti-chart-bar"></i> Estadísticas
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhoto(event)">
+    </div>
+
+    <!-- ══════════ HISTORIAL ══════════ -->
+    <div id="view-historial" class="view">
+      <div class="rb" style="margin-bottom:14px">
+        <h2 style="margin:0">Historial</h2>
+        <div class="row" style="gap:6px">
+          <select id="hf-sec" onchange="renderHist()" style="width:auto;font-size:13px"></select>
+          <select id="hf-area" onchange="renderHist()" style="width:auto;font-size:13px"></select>
+          <button class="btn btn-sm" onclick="cargarDatos()" title="Actualizar">
+            <i class="ti ti-refresh"></i>
+          </button>
+        </div>
+      </div>
+      <div id="hist-body"></div>
+    </div>
+
+    <!-- ══════════ ESTADÍSTICAS ══════════ -->
+    <div id="view-estadisticas" class="view">
+      <div class="rb" style="margin-bottom:4px">
+        <h2 style="margin:0">Estadísticas</h2>
+        <button class="btn btn-sm" onclick="cargarDatos()">
+          <i class="ti ti-refresh"></i> Actualizar
+        </button>
+      </div>
+      <p class="sub">Tendencias y desempeño por área</p>
+      <div class="g2" style="margin-bottom:14px">
+        <div>
+          <label>Sección</label>
+          <select id="es-sec" style="margin:0"></select>
+        </div>
+        <div>
+          <label>Área</label>
+          <select id="es-area" onchange="renderEst()" style="margin:0"></select>
+        </div>
+      </div>
+      <div class="g4" id="es-kpis" style="margin-bottom:16px"></div>
+      <div class="card" style="margin-bottom:12px">
+        <h3>Evolución del puntaje (%)</h3>
+        <div style="position:relative;height:200px">
+          <canvas id="c-evol" aria-label="Evolución del puntaje"></canvas>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <h3>Promedio por S</h3>
+        <div style="position:relative;height:185px">
+          <canvas id="c-s" aria-label="Promedio por S"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Comparativo por áreas</h3>
+        <div id="c-areas-wrap" style="position:relative;min-height:180px">
+          <canvas id="c-areas" aria-label="Comparativo por área"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONFIGURACIÓN — SOLO CAMBIA ESTA URL SI ACTUALIZAS EL SCRIPT
+═══════════════════════════════════════════════════════ */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby04USEbZ5rfv-qHLmXK_AEPeBJCnCNTCZm2j91qn0rhdmEjSBp1xjLr_EmyOj83JLdFg/exec';
+
+/* ═══════════════════════════════════════════════════════
+   CONSTANTES
+═══════════════════════════════════════════════════════ */
+const SN  = ['Seiri — Clasificar', 'Seiton — Ordenar', 'Seiso — Orden y Limpieza'];
+const SNC = ['Seiri', 'Seiton', 'Seiso'];
+const SC  = ['#378add', '#639922', '#ef9f27'];
+const SCB = ['#e6f1fb', '#eaf3de', '#faeeda'];
+const TC  = ['#3266ad', '#27ae60', '#e67e22'];
+
+/* ═══════════════════════════════════════════════════════
+   CHECKLISTS POR ÁREA
+═══════════════════════════════════════════════════════ */
+const CL = {
+  _PROD: [
+    {s:0, txt:'¿Se ha retirado del área todos los envoltorios y basura?'},
+    {s:0, txt:'¿Se ha clasificado y evacuado el desperdicio?'},
+    {s:0, txt:'¿Se ha evaluado el estado y la utilidad de las herramientas?'},
+    {s:0, txt:'¿Se han retirado las herramientas no útiles?'},
+    {s:0, txt:'¿Se ha clasificado e identificado el producto fuera de catálogo?'},
+    {s:0, txt:'¿Se ha clasificado e identificado el producto sobrante de requerimiento mensual?'},
+    {s:0, txt:'¿Se ha clasificado e identificado el producto para reproceso?'},
+    {s:1, txt:'¿Están identificadas las tarimas, carretas y estribos con producto en proceso y producto terminado?'},
+    {s:1, txt:'¿Los colaboradores cuentan con el espacio para realizar su trabajo adecuadamente?'},
+    {s:1, txt:'¿La maquinaria está ubicada de manera que no obstaculice salidas, equipos eléctricos o contra incendios?'},
+    {s:1, txt:'¿Toda herramienta y equipo de trabajo están ubicados en un lugar correctamente definido y delimitado?'},
+    {s:1, txt:'¿La distribución del área es la adecuada para un correcto flujo de trabajo?'},
+    {s:1, txt:'¿El equipo que se utiliza con poca frecuencia está ubicado donde no obstaculice el trabajo?'},
+    {s:1, txt:'¿Toda maquinaria inservible ha sido retirada de la zona de trabajo?'},
+    {s:1, txt:'¿La señalización en el área de trabajo es visible y comprensible para todos los colaboradores?'},
+    {s:2, txt:'¿Toda maquinaria se encuentra limpia y en buen estado?'},
+    {s:2, txt:'¿El oasis se encuentra limpio y en buen estado?'},
+    {s:2, txt:'¿Las paredes, pisos y techos se encuentran en buen estado, limpios y libres de residuos?'},
+    {s:2, txt:'¿Todos los ventiladores funcionan correctamente y están limpios?'},
+    {s:2, txt:'¿Las mesas, cajones, carretas y demás equipo están en buen estado? ¿Se ha gestionado su reparación en caso no lo estén?'},
+    {s:2, txt:'¿Las líneas amarillas, máquinas y paredes se encuentran pintadas? ¿Se ha gestionado la compra de pintura en caso no lo estén?'},
+    {s:2, txt:'¿Están despejados y delimitados los pasillos?'},
+    {s:2, txt:'¿Las herramientas de trabajo se encuentran en buen estado?'},
+    {s:2, txt:'¿Las lámparas se encuentran limpias y en buen estado?'},
+    {s:2, txt:'¿Las gavetas o cajones de las mesas de trabajo están limpias y ordenadas?'},
+    {s:2, txt:'¿Está la tubería tanto de aire como eléctrica en buen estado?'},
+    {s:2, txt:'¿Están ordenados y en buen estado los insumos de limpieza?'},
+    {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+    {s:2, txt:'¿El escritorio se encuentra limpio, ordenado y en buen estado?'},
+    {s:2, txt:'¿Se tiene un plan diario y semanal en que se definan responsables de la limpieza de máquinas y área de trabajo?'},
+  ],
+  'CALIDAD - CDI': [
+    {s:0, txt:'¿Se han desalojado muestras o piezas de prueba ya evaluadas?'},
+    {s:0, txt:'¿Los instrumentos fuera de calibración están identificados y apartados?'},
+    {s:0, txt:'¿Se han retirado documentos, reportes y formatos antiguos que ya no aplican?'},
+    {s:1, txt:'¿Cada equipo de medición (micrómetros, durómetros, espectrómetros) tiene un lugar fijo y señalizado?'},
+    {s:1, txt:'¿Las muestras de piezas están claramente identificadas?'},
+    {s:1, txt:'¿Los registros y certificados de calibración están organizados y fáciles de consultar?'},
+    {s:1, txt:'¿La señalización (pasillos y letreros) en el área de trabajo es visible y comprensible para todo el personal?'},
+    {s:1, txt:'¿Los cajones y gavetas se encuentran ordenados?'},
+    {s:2, txt:'¿Todo equipo de prueba está limpio, identificado y en buen estado?'},
+    {s:2, txt:'¿Están limpias y en buenas condiciones las mesas de trabajo?'},
+    {s:2, txt:'¿Las paredes están en buen estado y limpias?'},
+    {s:2, txt:'¿Está limpio y en buen estado el piso?'},
+    {s:2, txt:'¿El escritorio está limpio y en buenas condiciones?'},
+    {s:2, txt:'¿Los ventiladores están limpios y en buenas condiciones?'},
+    {s:2, txt:'¿Las lámparas están en buen estado?'},
+    {s:2, txt:'¿Los controles físicos están ordenados?'},
+    {s:2, txt:'¿El oasis se encuentra limpio y en buenas condiciones?'},
+    {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+  ],
+  'MANTTO. ELÉCTRICO': [
+    {s:0, txt:'¿Se han eliminado cables, conectores, fusibles y materiales eléctricos obsoletos o dañados?'},
+    {s:0, txt:'¿Los equipos de prueba y medición fuera de servicio están separados e identificados?'},
+    {s:0, txt:'¿Se han retirado documentos, reportes y formatos antiguos que ya no aplican?'},
+    {s:1, txt:'¿Cada equipo de medición tiene un lugar asignado con identificación visible?'},
+    {s:1, txt:'¿Los cajones o estantes de repuestos están organizados y etiquetados?'},
+    {s:1, txt:'¿La señalización (pasillos y letreros) en el área de trabajo es visible y comprensible para todo el personal?'},
+    {s:2, txt:'¿La zona de compresores se encuentra limpia y ordenada?'},
+    {s:2, txt:'¿La zona de tablero general se encuentra limpia y ordenada?'},
+    {s:2, txt:'¿La zona de subestación se encuentra limpia y ordenada?'},
+    {s:2, txt:'¿La zona de planta de emergencia se encuentra limpia y ordenada?'},
+    {s:2, txt:'¿La zona de bomba de agua se encuentra limpia y ordenada?'},
+    {s:2, txt:'¿Se encuentran identificados y en buen estado los tableros eléctricos de la planta?'},
+    {s:2, txt:'¿Se encuentran en buen estado las lámparas de la planta?'},
+    {s:2, txt:'¿Toda maquinaria cuenta con cables y pedales ordenados y en buen estado?'},
+    {s:2, txt:'¿Los extractores de techo de la planta funcionan correctamente?'},
+    {s:2, txt:'¿Los equipos de medición se mantienen limpios y en buen estado?'},
+    {s:2, txt:'¿Se cuenta con recipientes designados para desperdicios eléctricos (cables, conectores, plásticos)?'},
+    {s:2, txt:'¿Existe un plan de limpieza diaria/semanal asignado por responsable?'},
+    {s:2, txt:'¿Están limpias y en buenas condiciones las mesas de trabajo?'},
+    {s:2, txt:'¿Las paredes están en buen estado y limpias?'},
+    {s:2, txt:'¿Está limpio y en buen estado el piso?'},
+    {s:2, txt:'¿El escritorio está limpio y en buenas condiciones?'},
+    {s:2, txt:'¿Los ventiladores están limpios y en buenas condiciones?'},
+    {s:2, txt:'¿Las lámparas están en buen estado?'},
+    {s:2, txt:'¿Los controles físicos están ordenados?'},
+    {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+  ],
+  'MANTTO. MECÁNICO': [
+    {s:0, txt:'¿Se eliminaron repuestos, piezas o herramientas dañadas/obsoletas?'},
+    {s:0, txt:'¿Se han retirado documentos, reportes y formatos antiguos que ya no aplican?'},
+    {s:1, txt:'¿Cada herramienta tiene una ubicación fija y está identificada?'},
+    {s:1, txt:'¿Los repuestos están clasificados y correctamente ubicados?'},
+    {s:1, txt:'¿Toda maquinaria y equipo de trabajo se encuentra identificada y codificada?'},
+    {s:1, txt:'¿La señalización (pasillos y letreros) en el área de trabajo es visible y comprensible para todo el personal?'},
+    {s:1, txt:'¿Los cajones personales de mecánicos están ordenados y en buen estado?'},
+    {s:2, txt:'¿El área de trabajo está libre de grasa, polvo, virutas y residuos metálicos?'},
+    {s:2, txt:'¿Toda la maquinaria de la planta se encuentra funcionando y en buenas condiciones?'},
+    {s:2, txt:'¿Las intervenciones mecánicas se dejan limpias (sin grasa ni restos)?'},
+    {s:2, txt:'¿Las máquinas intervenidas tienen etiquetas de "Fuera de Servicio / En Proceso de Reparación"?'},
+    {s:2, txt:'¿Existe un plan de limpieza diaria/semanal asignado por responsable?'},
+    {s:2, txt:'¿Las paredes están en buen estado y limpias?'},
+    {s:2, txt:'¿El acceso al taller y el techo se encuentran en buen estado?'},
+    {s:2, txt:'¿Está limpio y en buen estado el piso?'},
+    {s:2, txt:'¿El escritorio está limpio y en buenas condiciones?'},
+    {s:2, txt:'¿Los ventiladores están limpios y en buenas condiciones?'},
+    {s:2, txt:'¿Las lámparas están en buen estado?'},
+    {s:2, txt:'¿Los controles físicos están ordenados?'},
+    {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+  ],
+};
+['MONTAJE MACHETES','EMPAQUE MACHETES','CTK','INYECTADO MACHETES','PULIDO MACHETES','ACABADO MACHETES','NIQUELADO MACHETES','FORJA MACHETES',
+ 'SOLDADURA','TOLVAS Y ESCOBA','CARRETILLAS','MADERA','FORJA IMPLEMENTOS','EMPAQUE IMPLEMENTOS','RECTIFICADO'
+].forEach(a => CL[a] = CL._PROD);
+CL['CALIDAD - PLANTA'] = CL['CALIDAD - CDI'];
+
+function getCL(area){ return (CL[area]||CL._PROD).map((c,i)=>({id:'q'+i,...c})); }
+
+const PLANTA = [
+  {id:'s1', nombre:'Mantenimiento',      areas:['MANTTO. ELÉCTRICO','MANTTO. MECÁNICO']},
+  {id:'s2', nombre:'Control de Calidad', areas:['CALIDAD - CDI','CALIDAD - PLANTA']},
+  {id:'s3', nombre:'Machetes',  areas:['MONTAJE MACHETES','EMPAQUE MACHETES','CTK','INYECTADO MACHETES','PULIDO MACHETES','ACABADO MACHETES','NIQUELADO MACHETES','FORJA MACHETES']},
+  {id:'s4', nombre:'Implementos',areas:['SOLDADURA','TOLVAS Y ESCOBA','CARRETILLAS','MADERA','FORJA IMPLEMENTOS','EMPAQUE IMPLEMENTOS','RECTIFICADO']},
+];
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let auditorias = [];
+let cur = null, curCL = [], curSTab = 0;
+let cEvol=null, cS_=null, cAreas=null, photoTarget=null;
+
+/* ═══════════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════════ */
+const uid = () => 'A' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+const pct = a => {
+  const f = a.scores.filter(x => x != null);
+  return f.length ? Math.round(f.filter(x=>x===1).length / f.length * 100) : 0;
+};
+const pctByS = (scores, cl) => SN.map((_,si) => {
+  const idxs = cl.map((c,i) => c.s===si ? i : -1).filter(i=>i>=0);
+  const resp  = idxs.map(i => scores[i]).filter(x => x!=null);
+  return resp.length ? Math.round(resp.filter(x=>x===1).length / resp.length * 100) : 0;
+});
+const colPct = p => p>=80 ? '#1a7340' : p>=60 ? '#8b5e00' : '#8b1c1c';
+const bgPct  = p => p>=80 ? '#eaf3de' : p>=60 ? '#faeeda' : '#fcebeb';
+const bCls   = p => p>=80 ? 'badge-ok' : p>=60 ? 'badge-warn' : 'badge-bad';
+const lvl    = p => p>=80 ? 'Resultado: Bueno ✓' : p>=60 ? 'Resultado: Regular — requiere atención' : 'Resultado: Crítico — acción inmediata';
+
+/* ═══════════════════════════════════════════════════════
+   API — COMUNICACIÓN CON APPS SCRIPT
+═══════════════════════════════════════════════════════ */
+function setSyncStatus(tipo, msg){
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  el.className = 'sync-bar sync-'+tipo;
+  const dot = tipo==='ok' ? 'ok' : tipo==='err' ? 'err' : 'spin';
+  el.innerHTML = `<div class="sync-dot ${dot}"></div><span>${msg}</span>`;
+}
+
+async function apiGet(params = {}){
+  const qs = Object.entries({...params, t: Date.now()})
+    .map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
+  const res = await fetch(SCRIPT_URL + '?' + qs, { redirect: 'follow' });
+  const txt = await res.text();
+  const clean = txt.replace(/^\s*[^[{]*/, '').replace(/[^}\]]*\s*$/, '');
+  return JSON.parse(clean || '{"ok":false,"error":"Respuesta vacía"}');
+}
+
+async function apiPost(body){
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    redirect: 'follow'
+  });
+  const txt = await res.text();
+  const clean = txt.replace(/^\s*[^[{]*/, '').replace(/[^}\]]*\s*$/, '');
+  return JSON.parse(clean || '{"ok":false,"error":"Respuesta vacía"}');
+}
+
+async function cargarDatos(){
+  setSyncStatus('loading', 'Cargando desde Google Sheets...');
+  try {
+    const res = await apiGet({ action: 'listar' });
+    if(res.ok){
+      auditorias = (res.auditorias || []).map(row => ({
+        id:        String(row.ID        || row.id        || ''),
+        fecha:     String(row.FECHA     || row.fecha     || ''),
+        auditor:   String(row.AUDITOR   || row.auditor   || ''),
+        seccion:   String(row.SECCION   || row.seccion   || ''),
+        area:      String(row.AREA      || row.area      || ''),
+        pctTotal:  Number(row.PCT_TOTAL  || row.pctTotal  || 0),
+        pctSeiri:  Number(row.PCT_SEIRI  || row.pctSeiri  || 0),
+        pctSeiton: Number(row.PCT_SEITON || row.pctSeiton || 0),
+        pctSeiso:  Number(row.PCT_SEISO  || row.pctSeiso  || 0),
+        notas:     String(row.NOTAS     || row.notas     || ''),
+      }));
+      setSyncStatus('ok', 'Conectado ✓ · ' + auditorias.length + ' auditorías');
+      renderInicio();
+      if(document.getElementById('view-historial').classList.contains('active'))    renderHist();
+      if(document.getElementById('view-estadisticas').classList.contains('active')){ fillSecEst(); renderEst(); }
+    } else {
+      setSyncStatus('err', 'Error al cargar: ' + (res.error || 'Sin respuesta'));
+    }
+  } catch(e) {
+    setSyncStatus('err', 'Sin conexión: ' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVEGACIÓN
+═══════════════════════════════════════════════════════ */
+function nav(v){
+  document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(e => e.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  const NI = { inicio:0, nueva:1, historial:2, estadisticas:3 };
+  if(NI[v] !== undefined)
+    document.querySelectorAll('.nav button')[NI[v]].classList.add('active');
+  if(v === 'inicio')       renderInicio();
+  if(v === 'historial')    renderHist();
+  if(v === 'estadisticas'){ fillSecEst(); renderEst(); }
+  if(v === 'nueva')        resetNueva();
+}
+
+/* ═══════════════════════════════════════════════════════
+   INICIO
+═══════════════════════════════════════════════════════ */
+function renderInicio(){
+  const pcts = auditorias.map(a => a.pctTotal);
+  const avg  = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : 0;
+  const last = pcts.length ? pcts[pcts.length-1] : 0;
+  const best = pcts.length ? Math.max(...pcts) : 0;
+  document.getElementById('inicio-kpis').innerHTML = `
+    <div class="met"><div class="met-v">${auditorias.length}</div><div class="met-l">Total</div></div>
+    <div class="met"><div class="met-v" style="color:${colPct(avg)}">${avg}%</div><div class="met-l">Promedio</div></div>
+    <div class="met"><div class="met-v" style="color:${colPct(last)}">${last}%</div><div class="met-l">Última</div></div>
+    <div class="met"><div class="met-v" style="color:${colPct(best)}">${best}%</div><div class="met-l">Mejor</div></div>`;
+  const rec = [...auditorias].reverse().slice(0, 5);
+  if(!rec.length){
+    document.getElementById('inicio-lista').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon"><i class="ti ti-clipboard"></i></div>
+        <p>No hay auditorías todavía.</p>
+        <p>Toca <strong>Nueva</strong> para comenzar.</p>
+      </div>`;
+    return;
+  }
+  document.getElementById('inicio-lista').innerHTML = rec.map(a => {
+    const p = a.pctTotal;
+    return `<div class="ar-row">
+      <div style="flex:1;min-width:140px">
+        <div style="font-size:14px;font-weight:600">${a.seccion} — ${a.area}</div>
+        <div style="font-size:12px;color:var(--text2)">${a.fecha} · ${a.auditor}</div>
+      </div>
+      <div style="min-width:90px">
+        <div class="pw"><div class="pf" style="width:${p}%;background:${p>=80?'#27ae60':p>=60?'#f39c12':'#e74c3c'}"></div></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">${p}%</div>
+      </div>
+      <span class="badge ${bCls(p)}">${p>=80?'Bien':p>=60?'Regular':'Crítico'}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   NUEVA AUDITORÍA
+═══════════════════════════════════════════════════════ */
+function resetNueva(){
+  ['paso1','paso2','paso3'].forEach((p,i) =>
+    document.getElementById(p).style.display = i===0 ? 'block' : 'none');
+  fillSecs(); fillAreas(); showCLInfo();
+  document.getElementById('p1-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('p1-auditor').value = '';
+  document.getElementById('p1-notas').value = '';
+  cur = null; curCL = []; curSTab = 0;
+}
+
+function fillSecs(){
+  document.getElementById('p1-sec').innerHTML =
+    PLANTA.map(x => `<option value="${x.id}">${x.nombre}</option>`).join('');
+  fillAreas();
+}
+function fillAreas(){
+  const sid = document.getElementById('p1-sec').value;
+  const sec = PLANTA.find(x => x.id === sid);
+  document.getElementById('p1-area').innerHTML =
+    (sec ? sec.areas : []).map(a => `<option value="${a}">${a}</option>`).join('');
+  showCLInfo();
+}
+function showCLInfo(){
+  const area = document.getElementById('p1-area')?.value;
+  const el   = document.getElementById('cl-info');
+  if(!area){ el.style.display='none'; return; }
+  const cl = getCL(area);
+  const bS = SN.map((_,si) => cl.filter(c=>c.s===si).length);
+  el.style.display = 'inline-flex';
+  el.innerHTML = `<i class="ti ti-clipboard-list" style="font-size:12px"></i> ${cl.length} preguntas · S:${bS[0]} O:${bS[1]} L:${bS[2]}`;
+}
+
+function goEval(){
+  const sid  = document.getElementById('p1-sec').value;
+  const sec  = PLANTA.find(x => x.id === sid);
+  if(!sec || !sec.areas.length){ alert('Esta sección no tiene áreas.'); return; }
+  const area    = document.getElementById('p1-area').value;
+  const auditor = document.getElementById('p1-auditor').value.trim() || 'Auditor';
+  const fecha   = document.getElementById('p1-fecha').value;
+  if(!fecha){ alert('Selecciona una fecha.'); return; }
+  curCL = getCL(area);
+  cur = {
+    id: uid(), seccion: sec.nombre, area, auditor, fecha,
+    notas: document.getElementById('p1-notas').value,
+    scores: curCL.map(() => null),
+    photos: curCL.map(() => []),
+    obs:    curCL.map(() => ''),
+  };
+  document.getElementById('eval-titulo').textContent = sec.nombre + ' — ' + area;
+  document.getElementById('eval-sub').textContent    = 'Auditor: ' + auditor + ' · ' + fecha;
+  document.getElementById('paso1').style.display = 'none';
+  document.getElementById('paso2').style.display = 'block';
+  curSTab = 0; renderStabs(); renderItems(); updateFotoBanner();
+}
+function goP1(){
+  document.getElementById('paso1').style.display = 'block';
+  document.getElementById('paso2').style.display = 'none';
+}
+
+function fotosPend(){
+  return curCL.map((c,i) => ({i,c}))
+    .filter(({i}) => cur.scores[i]===0 && (!cur.photos[i]||!cur.photos[i].length));
+}
+function updateFotoBanner(){
+  const pend = fotosPend();
+  const el   = document.getElementById('foto-banner');
+  if(pend.length){
+    el.style.display = 'flex';
+    document.getElementById('foto-banner-txt').textContent =
+      pend.length === 1
+        ? '1 pregunta con "No" requiere foto obligatoria.'
+        : pend.length + ' preguntas con "No" requieren foto obligatoria.';
+  } else { el.style.display = 'none'; }
+}
+
+function renderStabs(){
+  document.getElementById('stabs').innerHTML = SN.map((n,i) => {
+    const tot  = curCL.filter(c => c.s===i).length;
+    const done = curCL.filter(c => c.s===i)
+      .map(c => curCL.indexOf(c))
+      .filter(gi => cur.scores[gi] != null).length;
+    const hasPendFoto = curCL.filter(c => c.s===i)
+      .map(c => curCL.indexOf(c))
+      .some(gi => cur.scores[gi]===0 && (!cur.photos[gi]||!cur.photos[gi].length));
+    const isActive = i === curSTab;
+    return `<button class="stab" onclick="setSTab(${i})"
+      style="${isActive ? 'background:'+TC[i]+';border-color:'+TC[i]+';color:#fff' : ''}">
+      ${SNC[i]}${hasPendFoto ? ' ⚠️' : ''}
+      <span class="stab-cnt">${done}/${tot}</span>
+    </button>`;
+  }).join('');
+  const total = curCL.length;
+  const done  = cur.scores.filter(x => x!=null).length;
+  document.getElementById('eval-prog').textContent = done + ' de ' + total;
+  document.getElementById('eval-pb').style.width   = Math.round(done/total*100) + '%';
+}
+function setSTab(i){ curSTab=i; renderStabs(); renderItems(); }
+
+function renderItems(){
+  const items = curCL.filter(c => c.s === curSTab);
+  if(!items.length){
+    document.getElementById('eval-items').innerHTML = '<div class="empty"><p>Sin preguntas en esta sección.</p></div>';
+    return;
+  }
+  const hdr = `<div class="s-section-hdr" style="background:${SCB[curSTab]};color:${SC[curSTab]}">
+    <i class="ti ti-clipboard-list"></i>
+    ${SN[curSTab]} — ${items.length} preguntas
+  </div>`;
+  document.getElementById('eval-items').innerHTML = hdr + items.map(c => {
+    const gi       = curCL.indexOf(c);
+    const sc       = cur.scores[gi];
+    const ph       = cur.photos[gi] || [];
+    const ob       = cur.obs[gi]    || '';
+    const isNo     = sc === 0;
+    const needFoto = isNo && !ph.length;
+    let cls = 'cl-item';
+    if(sc===1) cls += ' ans-si';
+    else if(isNo){ cls += ' ans-no'; if(needFoto) cls += ' no-foto'; }
+    return `<div class="${cls}" id="ci${gi}">
+      <div class="cl-hdr">
+        <span class="cl-num">${gi+1}</span>
+        <span class="cl-txt">${c.txt}</span>
+      </div>
+      <div class="yn-wrap">
+        <button class="yn-btn yn-si${sc===1?' sel':''}" onclick="setScore(${gi},1)">
+          <i class="ti ti-check"></i> Sí
+        </button>
+        <button class="yn-btn yn-no${sc===0?' sel':''}" onclick="setScore(${gi},0)">
+          <i class="ti ti-x"></i> No
+        </button>
+      </div>
+      ${isNo ? `
+        <div class="foto-req">
+          ${needFoto
+            ? `<div class="foto-req-title"><i class="ti ti-alert-triangle"></i> Foto obligatoria</div>
+               <div style="font-size:12px">Documenta la situación con una foto</div>`
+            : `<div class="foto-req-title" style="color:var(--green)"><i class="ti ti-circle-check"></i> Foto adjunta (${ph.length})</div>`}
+        </div>
+        <div class="photo-zone">
+          <button class="photo-add-btn${needFoto?' req':''}" onclick="openPhoto(${gi})">
+            <i class="ti ti-camera"></i>
+            ${ph.length ? 'Agregar foto (' + ph.length + ')' : needFoto ? '📷 Subir foto requerida' : 'Agregar foto'}
+          </button>
+          ${ph.map((src,pi) => `
+            <div class="photo-wrap">
+              <img src="${src}" class="photo-thumb" alt="Foto ${pi+1}">
+              <button class="photo-del" onclick="delPhoto(${gi},${pi})">×</button>
+            </div>`).join('')}
+        </div>
+        <input type="text" placeholder="Observación..." value="${ob}"
+          oninput="cur.obs[${gi}]=this.value" style="font-size:13px;margin-top:8px">
+      ` : ''}
+    </div>`;
+  }).join('');
+}
+
+function setScore(gi, v){
+  cur.scores[gi] = v;
+  renderStabs(); renderItems(); updateFotoBanner();
+}
+function openPhoto(gi){ photoTarget=gi; document.getElementById('photoInput').click(); }
+function handlePhoto(e){
+  if(photoTarget==null) return;
+  Array.from(e.target.files).forEach(f => {
+    const r = new FileReader();
+    r.onload = ev => {
+      cur.photos[photoTarget].push(ev.target.result);
+      renderItems(); updateFotoBanner(); renderStabs();
+    };
+    r.readAsDataURL(f);
+  });
+  e.target.value = '';
+}
+function delPhoto(gi,pi){ cur.photos[gi].splice(pi,1); renderItems(); updateFotoBanner(); renderStabs(); }
+
+async function guardar(){
+  // Validar fotos obligatorias
+  const pend = fotosPend();
+  if(pend.length > 0){
+    const lista = pend.map(({i}) => (i+1) + '. ' + curCL[i].txt.slice(0,55) + '…').join('\n');
+    alert('Las siguientes preguntas con "No" necesitan foto antes de guardar:\n\n' + lista);
+    setSTab(curCL[pend[0].i].s);
+    return;
+  }
+
+  const p  = pct(cur);
+  const bS = pctByS(cur.scores, curCL);
+  const nosList = cur.scores.map((sc,i) => sc===0 ? i : -1).filter(i=>i>=0);
+
+  const btnG = document.getElementById('btn-guardar');
+  btnG.disabled = true;
+  btnG.innerHTML = '<i class="ti ti-loader"></i> Guardando en Sheets...';
+
+  // Construir payload — fotos incluidas (base64)
+  const payload = {
+    action:    'guardar',
+    id:        cur.id,
+    fecha:     cur.fecha,
+    auditor:   cur.auditor,
+    seccion:   cur.seccion,
+    area:      cur.area,
+    pctTotal:  p,
+    pctSeiri:  bS[0],
+    pctSeiton: bS[1],
+    pctSeiso:  bS[2],
+    notas:     cur.notas,
+    preguntas: curCL.map((c,i) => ({
+      s:          c.s,
+      txt:        c.txt,
+      respuesta:  cur.scores[i]===1 ? 'Si' : cur.scores[i]===0 ? 'No' : '',
+      obs:        cur.obs[i] || '',
+      foto:       cur.photos[i] && cur.photos[i].length ? cur.photos[i][0] : null,
+    }))
+  };
+
+  let res;
+  try {
+    res = await apiPost(payload);
+  } catch(e) {
+    res = { ok: false, error: e.message };
+  }
+
+  btnG.disabled = false;
+  btnG.innerHTML = '<i class="ti ti-device-floppy"></i> Guardar auditoría';
+
+  if(!res || !res.ok){
+    // Respaldo local
+    const bk = JSON.parse(localStorage.getItem('5s_bk') || '[]');
+    bk.push(payload);
+    localStorage.setItem('5s_bk', JSON.stringify(bk));
+    alert('⚠️ No se pudo guardar en Sheets ahora.\n\nSe guardó localmente como respaldo.\n\nError: ' + (res?.error || 'Sin respuesta'));
+    return;
+  }
+
+  // Mostrar resultado
+  document.getElementById('p3-pct').textContent    = p;
+  document.getElementById('p3-pct').style.color    = colPct(p);
+  document.getElementById('p3-nivel').textContent  = lvl(p);
+  document.getElementById('p3-resumen').textContent = cur.seccion + ' / ' + cur.area + ' · ' + cur.fecha + ' · ' + cur.auditor;
+  document.getElementById('p3-byS').innerHTML = SN.map((n,i) => `
+    <div class="met" style="border-top:3px solid ${SC[i]}">
+      <div class="met-v" style="font-size:22px;color:${colPct(bS[i])}">${bS[i]}%</div>
+      <div class="met-l">${SNC[i]}</div>
+    </div>`).join('');
+  document.getElementById('p3-nos').innerHTML = nosList.length
+    ? `<div class="card" style="border-color:#f5c0c0;border-left:4px solid var(--red2)">
+         <h3 style="color:var(--red);margin-bottom:10px">
+           <i class="ti ti-x"></i> Respuestas "No" — ${nosList.length} ítem${nosList.length>1?'s':''}
+         </h3>
+         ${nosList.map(i=>`<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">${i+1}. ${curCL[i].txt}</div>`).join('')}
+       </div>` : '';
+
+  document.getElementById('paso2').style.display = 'none';
+  document.getElementById('paso3').style.display = 'block';
+  cargarDatos();
+}
+
+/* ═══════════════════════════════════════════════════════
+   HISTORIAL
+═══════════════════════════════════════════════════════ */
+function renderHist(){
+  const secSel  = document.getElementById('hf-sec');
+  const areaSel = document.getElementById('hf-area');
+  const sv = secSel.value || '';
+  secSel.innerHTML = `<option value="">Todas las secciones</option>` +
+    PLANTA.map(s => `<option value="${s.nombre}">${s.nombre}</option>`).join('');
+  secSel.value = sv;
+  const areas = sv ? PLANTA.find(s=>s.nombre===sv)?.areas||[] : [];
+  areaSel.innerHTML = `<option value="">Todas las áreas</option>` +
+    areas.map(a => `<option value="${a}">${a}</option>`).join('');
+  const av = areaSel.value || '';
+  let list = [...auditorias].reverse();
+  if(sv) list = list.filter(a => a.seccion===sv);
+  if(av) list = list.filter(a => a.area===av);
+  if(!list.length){
+    document.getElementById('hist-body').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon"><i class="ti ti-search"></i></div>
+        <p>No hay auditorías${sv||av?' con ese filtro':' todavía'}.</p>
+        <button class="btn btn-primary" style="margin-top:14px" onclick="nav('nueva')">
+          <i class="ti ti-plus"></i> Crear primera auditoría
+        </button>
+      </div>`;
+    return;
+  }
+  document.getElementById('hist-body').innerHTML = list.map(a => {
+    const p  = a.pctTotal;
+    const bS = [a.pctSeiri, a.pctSeiton, a.pctSeiso];
+    return `<div class="hist-item">
+      <div class="rb" style="margin-bottom:10px">
+        <div>
+          <div style="font-size:15px;font-weight:700">${a.seccion} — ${a.area}</div>
+          <div style="font-size:12px;color:var(--text2)">${a.fecha} · ${a.auditor}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:26px;font-weight:800;color:${colPct(p)}">${p}%</div>
+          <span class="badge ${bCls(p)}">${p>=80?'Bien':p>=60?'Regular':'Crítico'}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${a.notas?'10px':'0'}">
+        ${SNC.map((n,i) => `<div class="s-mini">
+          <div class="s-mini-lbl">${n}</div>
+          <div class="pw" style="height:7px">
+            <div class="pf" style="width:${bS[i]}%;background:${SC[i]}"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text2);font-weight:600">${bS[i]}%</div>
+        </div>`).join('')}
+      </div>
+      ${a.notas ? `<div style="font-size:12px;color:var(--text2);border-top:1px solid var(--border);padding-top:8px;font-style:italic">${a.notas}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   ESTADÍSTICAS
+═══════════════════════════════════════════════════════ */
+function fillSecEst(){
+  const s = document.getElementById('es-sec'), old = s.value;
+  s.innerHTML = `<option value="">Toda la planta</option>` +
+    PLANTA.map(x => `<option value="${x.nombre}">${x.nombre}</option>`).join('');
+  s.value = old; fillAreasEst();
+}
+function fillAreasEst(){
+  const sv = document.getElementById('es-sec').value;
+  document.getElementById('es-area').innerHTML = `<option value="">Todas las áreas</option>` +
+    (sv ? PLANTA.find(s=>s.nombre===sv)?.areas||[] : [])
+    .map(x => `<option value="${x}">${x}</option>`).join('');
+}
+function renderEst(){
+  const sv = document.getElementById('es-sec').value;
+  const av = document.getElementById('es-area').value;
+  let data = [...auditorias];
+  if(sv) data = data.filter(a => a.seccion===sv);
+  if(av) data = data.filter(a => a.area===av);
+  const pcts = data.map(a => a.pctTotal);
+  const avg  = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : 0;
+  const best = pcts.length ? Math.max(...pcts) : 0;
+  const wrst = pcts.length ? Math.min(...pcts) : 0;
+  document.getElementById('es-kpis').innerHTML = `
+    <div class="met"><div class="met-v">${data.length}</div><div class="met-l">Auditorías</div></div>
+    <div class="met"><div class="met-v" style="color:${colPct(avg)}">${avg}%</div><div class="met-l">Promedio</div></div>
+    <div class="met"><div class="met-v" style="color:${colPct(best)}">${best}%</div><div class="met-l">Máximo</div></div>
+    <div class="met"><div class="met-v" style="color:${colPct(wrst)}">${wrst}%</div><div class="met-l">Mínimo</div></div>`;
+  if(cEvol){ cEvol.destroy(); cEvol=null; }
+  if(cS_)  { cS_.destroy();  cS_=null;  }
+  if(cAreas){ cAreas.destroy(); cAreas=null; }
+  if(!data.length) return;
+  cEvol = new Chart(document.getElementById('c-evol'), {
+    type: 'line',
+    data: {
+      labels: data.map(a => a.fecha.slice(5) + ' ' + a.area.split(' ')[0]),
+      datasets: [{
+        label:'%', data: pcts,
+        borderColor:'#3266ad', backgroundColor:'rgba(50,102,173,.08)',
+        tension:.3, pointRadius:5, pointBackgroundColor:'#3266ad', borderWidth:2
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } } }
+  });
+  const avgS = SN.map((_,si) => {
+    const vs = data.map(a => [a.pctSeiri,a.pctSeiton,a.pctSeiso][si]);
+    return vs.length ? Math.round(vs.reduce((a,b)=>a+b,0)/vs.length) : 0;
+  });
+  cS_ = new Chart(document.getElementById('c-s'), {
+    type: 'bar',
+    data: {
+      labels: SNC,
+      datasets: [{ label:'%', data:avgS, backgroundColor:SCB, borderColor:SC, borderWidth:2 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } } }
+  });
+  const am = {};
+  data.forEach(a => { const k=a.seccion+'/'+a.area; if(!am[k]) am[k]=[]; am[k].push(a.pctTotal); });
+  const labs = Object.keys(am);
+  const vals = labs.map(k => Math.round(am[k].reduce((a,b)=>a+b,0)/am[k].length));
+  const h = Math.max(labs.length * 44 + 80, 180);
+  document.getElementById('c-areas-wrap').style.height = h + 'px';
+  cAreas = new Chart(document.getElementById('c-areas'), {
+    type: 'bar',
+    data: {
+      labels: labs,
+      datasets: [{ label:'%', data:vals,
+        backgroundColor: vals.map(v => bgPct(v)),
+        borderColor:     vals.map(v => colPct(v)),
+        borderWidth: 2 }]
+    },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } } }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   ARRANQUE
+═══════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  fillSecs(); fillAreas(); showCLInfo();
+  document.getElementById('p1-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('es-sec').addEventListener('change', () => { fillAreasEst(); renderEst(); });
+  cargarDatos();
+});
+</script>
+</body>
+</html>
