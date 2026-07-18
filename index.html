@@ -174,7 +174,7 @@ textarea{resize:vertical;min-height:60px}
 .logo-marca{height:100%;width:auto;max-width:140px;object-fit:contain}
 .empresa-depto{font-size:16px;color:var(--text);font-weight:700;margin-top:4px;text-transform:uppercase;letter-spacing:.6px}
 
-#photoInput{display:none}
+#photoInputCamera,#photoInputGallery{display:none}
 
 /* ── RESPONSIVE ── */
 @media(max-width:400px){
@@ -352,7 +352,8 @@ textarea{resize:vertical;min-height:60px}
         </div>
       </div>
 
-      <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhoto(event)">
+      <input type="file" id="photoInputCamera"  accept="image/*" capture="environment" onchange="handlePhoto(event,'camera')">
+      <input type="file" id="photoInputGallery" accept="image/*" multiple           onchange="handlePhoto(event,'gallery')">
     </div>
 
     <!-- ══════════ HISTORIAL ══════════ -->
@@ -833,9 +834,11 @@ function renderItems(){
             : `<div class="foto-req-title" style="color:var(--green)"><i class="ti ti-circle-check"></i> Foto adjunta (${ph.length})</div>`}
         </div>
         <div class="photo-zone">
-          <button class="photo-add-btn${needFoto?' req':''}" onclick="openPhoto(${gi})">
-            <i class="ti ti-camera"></i>
-            ${ph.length ? 'Agregar foto (' + ph.length + ')' : needFoto ? '📷 Subir foto requerida' : 'Agregar foto'}
+          <button class="photo-add-btn${needFoto?' req':''}" onclick="openCamera(${gi})">
+            <i class="ti ti-camera"></i> Tomar foto
+          </button>
+          <button class="photo-add-btn" onclick="openGallery(${gi})">
+            <i class="ti ti-photo"></i> Galería${ph.length?' ('+ph.length+')':''}
           </button>
           ${ph.map((src,pi) => `
             <div class="photo-wrap">
@@ -854,8 +857,17 @@ function setScore(gi, v){
   cur.scores[gi] = v;
   renderStabs(); renderItems(); updateFotoBanner();
 }
-function openPhoto(gi){ photoTarget=gi; document.getElementById('photoInput').click(); }
-function handlePhoto(e){
+function openCamera(gi){
+  photoTarget=gi;
+  document.getElementById('photoInputCamera').value='';
+  document.getElementById('photoInputCamera').click();
+}
+function openGallery(gi){
+  photoTarget=gi;
+  document.getElementById('photoInputGallery').value='';
+  document.getElementById('photoInputGallery').click();
+}
+function handlePhoto(e, source){
   if(photoTarget==null) return;
   Array.from(e.target.files).forEach(f => {
     const r = new FileReader();
@@ -865,7 +877,6 @@ function handlePhoto(e){
     };
     r.readAsDataURL(f);
   });
-  e.target.value = '';
 }
 function delPhoto(gi,pi){ cur.photos[gi].splice(pi,1); renderItems(); updateFotoBanner(); renderStabs(); }
 
@@ -905,7 +916,7 @@ async function guardar(){
       txt:        c.txt,
       respuesta:  cur.scores[i]===1 ? 'Si' : cur.scores[i]===0 ? 'No' : '',
       obs:        cur.obs[i] || '',
-      foto:       cur.photos[i] && cur.photos[i].length ? cur.photos[i][0] : null,
+      foto:       cur.photos[i] && cur.photos[i].length ? cur.photos[i] : [],
     }))
   };
 
