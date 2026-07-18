@@ -896,9 +896,10 @@ async function guardar(){
 
   const btnG = document.getElementById('btn-guardar');
   btnG.disabled = true;
-  btnG.innerHTML = '<i class="ti ti-loader"></i> Guardando en Sheets...';
 
-  // Construir payload — fotos incluidas (base64)
+  // ── PASO 1: Guardar datos de texto (sin fotos) ──
+  btnG.innerHTML = '<i class="ti ti-loader"></i> Guardando datos...';
+
   const payload = {
     action:    'guardar',
     id:        cur.id,
@@ -912,12 +913,12 @@ async function guardar(){
     pctSeiso:  bS[2],
     notas:     cur.notas,
     preguntas: curCL.map((c,i) => ({
-      s:          c.s,
-      txt:        c.txt,
-      respuesta:  cur.scores[i]===1 ? 'Si' : cur.scores[i]===0 ? 'No' : '',
-      obs:        cur.obs[i] || '',
-      foto:       cur.photos[i] && cur.photos[i].length ? cur.photos[i] : [],
+      s:         c.s,
+      txt:       c.txt,
+      respuesta: cur.scores[i]===1 ? 'Si' : cur.scores[i]===0 ? 'No' : '',
+      obs:       cur.obs[i] || '',
     }))
+    // SIN fotos aquí — se envían después una por una
   };
 
   let res;
@@ -927,19 +928,52 @@ async function guardar(){
     res = { ok: false, error: e.message };
   }
 
-  btnG.disabled = false;
-  btnG.innerHTML = '<i class="ti ti-device-floppy"></i> Guardar auditoría';
-
   if(!res || !res.ok){
-    // Respaldo local
+    btnG.disabled = false;
+    btnG.innerHTML = '<i class="ti ti-device-floppy"></i> Guardar auditoría';
     const bk = JSON.parse(localStorage.getItem('5s_bk') || '[]');
     bk.push(payload);
     localStorage.setItem('5s_bk', JSON.stringify(bk));
-    alert('⚠️ No se pudo guardar en Sheets ahora.\n\nSe guardó localmente como respaldo.\n\nError: ' + (res?.error || 'Sin respuesta'));
+    alert('⚠️ No se pudo guardar en Sheets.\n\nError: ' + (res?.error || 'Sin respuesta'));
     return;
   }
 
-  // Mostrar resultado
+  const folderId = res.folderId || '';
+
+  // ── PASO 2: Enviar fotos UNA POR UNA ──
+  // Contar total de fotos para mostrar progreso
+  const todasFotos = [];
+  curCL.forEach((c,i) => {
+    const fotos = cur.photos[i] || [];
+    fotos.forEach((foto, fi) => {
+      todasFotos.push({ numPregunta: i+1, numFoto: fi+1, foto });
+    });
+  });
+
+  if(todasFotos.length > 0){
+    for(let t = 0; t < todasFotos.length; t++){
+      const { numPregunta, numFoto, foto } = todasFotos[t];
+      btnG.innerHTML = `<i class="ti ti-loader"></i> Subiendo foto ${t+1} de ${todasFotos.length}...`;
+      try {
+        await apiPost({
+          action:       'guardarFoto',
+          auditoriaId:  cur.id,
+          folderId:     folderId,
+          numPregunta:  numPregunta,
+          numFoto:      numFoto,
+          foto:         foto,
+        });
+      } catch(e) {
+        console.warn('Error subiendo foto p'+numPregunta+'_f'+numFoto+':', e.message);
+        // No bloqueamos — si una foto falla, seguimos con las demás
+      }
+    }
+  }
+
+  btnG.disabled = false;
+  btnG.innerHTML = '<i class="ti ti-device-floppy"></i> Guardar auditoría';
+
+  // ── PASO 3: Mostrar resultado ──
   document.getElementById('p3-pct').textContent    = p;
   document.getElementById('p3-pct').style.color    = colPct(p);
   document.getElementById('p3-nivel').textContent  = lvl(p);
