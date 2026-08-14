@@ -308,14 +308,7 @@ textarea{resize:vertical;min-height:60px}
         </div>
         <div class="stab-wrap" id="stabs"></div>
         <div id="eval-items"></div>
-        <div style="display:flex;gap:10px;margin-top:16px">
-          <button class="btn" onclick="goP1()">
-            <i class="ti ti-arrow-left"></i> Atrás
-          </button>
-          <button class="btn btn-primary" id="btn-continuar" onclick="irComentarios()" style="flex:1">
-            <i class="ti ti-arrow-right"></i> Continuar
-          </button>
-        </div>
+        <div style="display:flex;gap:10px;margin-top:16px" id="eval-btns"></div>
       </div>
 
       <!-- PASO 2.5 — COMENTARIOS GENERALES -->
@@ -502,7 +495,7 @@ textarea{resize:vertical;min-height:60px}
   </div><!-- /content -->
 
   <div style="text-align:center;padding:10px 16px;border-top:0.5px solid var(--border);background:var(--bg2)">
-    <span style="font-size:11px;color:var(--text3);font-weight:500">Auditorías 5S · IMACASA · Departamento de Ingeniería · <strong>v1.0</strong></span>
+    <span style="font-size:11px;color:var(--text3);font-weight:500">Auditorías 5S · IMACASA · Departamento de Ingeniería · <strong>v1.1</strong></span>
   </div>
 
 </div><!-- /app -->
@@ -917,6 +910,8 @@ function updateFotoBanner(){
 }
 
 function renderStabs(){
+  const ultimaS = SN.length - 1; // índice de la última S (2 = Seiso)
+
   document.getElementById('stabs').innerHTML = SN.map((n,i) => {
     const tot  = curCL.filter(c => c.s===i).length;
     const done = curCL.filter(c => c.s===i)
@@ -932,10 +927,26 @@ function renderStabs(){
       <span class="stab-cnt">${done}/${tot}</span>
     </button>`;
   }).join('');
+
   const total = curCL.length;
   const done  = cur.scores.filter(x => x!=null).length;
   document.getElementById('eval-prog').textContent = done + ' de ' + total;
   document.getElementById('eval-pb').style.width   = Math.round(done/total*100) + '%';
+
+  // ── Botones de navegación dinámicos ──
+  const esUltimaS = curSTab === ultimaS;
+  document.getElementById('eval-btns').innerHTML = `
+    <button class="btn" onclick="${curSTab === 0 ? 'goP1()' : 'setSTab(' + (curSTab-1) + ')'}">
+      <i class="ti ti-arrow-left"></i> ${curSTab === 0 ? 'Atrás' : SNC[curSTab-1]}
+    </button>
+    ${esUltimaS
+      ? `<button class="btn btn-primary" onclick="irComentarios()" style="flex:1;font-weight:600">
+           <i class="ti ti-message-dots"></i> Pasar a comentarios
+         </button>`
+      : `<button class="btn btn-primary" onclick="setSTab(${curSTab+1})" style="flex:1">
+           <i class="ti ti-arrow-right"></i> Continuar — ${SNC[curSTab+1]}
+         </button>`
+    }`;
 }
 function setSTab(i){ curSTab=i; renderStabs(); renderItems(); }
 
