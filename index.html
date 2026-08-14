@@ -289,7 +289,8 @@ textarea{resize:vertical;min-height:60px}
         <div class="steps">
           <div class="step done">① Datos ✓</div>
           <div class="step active">② Evaluación</div>
-          <div class="step">③ Resultado</div>
+          <div class="step">③ Comentarios</div>
+          <div class="step">④ Resultado</div>
         </div>
         <div class="rb" style="margin-bottom:6px">
           <div>
@@ -311,6 +312,62 @@ textarea{resize:vertical;min-height:60px}
           <button class="btn" onclick="goP1()">
             <i class="ti ti-arrow-left"></i> Atrás
           </button>
+          <button class="btn btn-primary" id="btn-continuar" onclick="irComentarios()" style="flex:1">
+            <i class="ti ti-arrow-right"></i> Continuar
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 2.5 — COMENTARIOS GENERALES -->
+      <div id="paso25" style="display:none">
+        <div class="steps">
+          <div class="step done">① Datos ✓</div>
+          <div class="step done">② Evaluación ✓</div>
+          <div class="step active">③ Comentarios</div>
+          <div class="step">④ Resultado</div>
+        </div>
+        <h2 style="margin-bottom:4px">Comentarios y firma</h2>
+        <p class="sub">Cierre de auditoría — campos opcionales</p>
+
+        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+
+          <!-- Comentario general -->
+          <div>
+            <label for="com-general">Comentario general</label>
+            <textarea id="com-general" rows="4" placeholder="Resumen del estado del área, observaciones relevantes..."></textarea>
+          </div>
+
+          <!-- Responsable -->
+          <div>
+            <label for="com-responsable">Nombre del responsable del área</label>
+            <input id="com-responsable" type="text" placeholder="Nombre del supervisor o encargado">
+          </div>
+
+          <!-- Firma digital -->
+          <div>
+            <label>Firma del responsable</label>
+            <div style="border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:#fff;position:relative;touch-action:none">
+              <canvas id="firma-canvas" width="600" height="180"
+                style="width:100%;height:180px;display:block;border-radius:var(--radius-sm);cursor:crosshair"></canvas>
+              <div style="position:absolute;bottom:6px;right:8px;font-size:11px;color:var(--text3)">Firme aquí</div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:6px">
+              <button class="btn btn-sm" onclick="limpiarFirma()">
+                <i class="ti ti-eraser"></i> Borrar firma
+              </button>
+            </div>
+            <p style="font-size:12px;color:var(--text2);margin-top:4px">
+              <i class="ti ti-info-circle" style="font-size:13px"></i>
+              Use el dedo o el lápiz para firmar. La firma se guardará en Drive junto con la auditoría.
+            </p>
+          </div>
+
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn" onclick="volverEval()">
+            <i class="ti ti-arrow-left"></i> Atrás
+          </button>
           <button class="btn btn-primary" id="btn-guardar" onclick="guardar()" style="flex:1">
             <i class="ti ti-device-floppy"></i> Guardar auditoría
           </button>
@@ -322,7 +379,8 @@ textarea{resize:vertical;min-height:60px}
         <div class="steps">
           <div class="step done">① Datos ✓</div>
           <div class="step done">② Evaluación ✓</div>
-          <div class="step active">③ Resultado</div>
+          <div class="step done">③ Comentarios ✓</div>
+          <div class="step active">④ Resultado</div>
         </div>
         <div style="text-align:center;padding:24px 0 16px">
           <i class="ti ti-circle-check" style="font-size:56px;color:var(--green)"></i>
@@ -337,6 +395,7 @@ textarea{resize:vertical;min-height:60px}
         </div>
         <div class="g3" id="p3-byS" style="margin-bottom:16px"></div>
         <div id="p3-nos" style="margin-bottom:16px"></div>
+        <div id="p3-comentarios" style="margin-bottom:16px"></div>
         <div class="gap12">
           <button class="btn btn-primary btn-full" onclick="resetNueva()">
             <i class="ti ti-plus"></i> Nueva auditoría
@@ -380,19 +439,48 @@ textarea{resize:vertical;min-height:60px}
         </button>
       </div>
       <p class="sub">Tendencias y desempeño por área</p>
-      <div class="g2" style="margin-bottom:14px">
+
+      <!-- Filtros principales -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
         <div>
           <label>Sección</label>
           <select id="es-sec" style="margin:0"></select>
         </div>
         <div>
           <label>Área</label>
-          <select id="es-area" onchange="renderEst()" style="margin:0"></select>
+          <select id="es-area" style="margin:0"></select>
+        </div>
+      </div>
+
+      <!-- Filtro de fecha estilo Excel -->
+      <div style="margin-bottom:14px;position:relative">
+        <label>Fecha</label>
+        <button id="btn-fecha-filtro" onclick="toggleFechaDropdown()" style="
+          width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);
+          background:var(--bg);color:var(--text);font-size:14px;text-align:left;cursor:pointer;
+          display:flex;align-items:center;justify-content:space-between;font-family:inherit">
+          <span id="fecha-filtro-label">Todas las fechas</span>
+          <i class="ti ti-chevron-down" id="fecha-chevron"></i>
+        </button>
+        <!-- Dropdown de checkboxes -->
+        <div id="fecha-dropdown" style="
+          display:none;position:absolute;z-index:200;
+          top:calc(100% + 4px);left:0;right:0;
+          background:var(--bg);border:1px solid var(--border2);
+          border-radius:var(--radius-sm);box-shadow:0 4px 16px rgba(0,0,0,.12);
+          max-height:320px;overflow-y:auto">
+          <!-- Barra de acciones -->
+          <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:8px;position:sticky;top:0;background:var(--bg);z-index:1">
+            <button onclick="seleccionarTodasFechas(true)"  class="btn btn-sm" style="flex:1;font-size:12px">Todas</button>
+            <button onclick="seleccionarTodasFechas(false)" class="btn btn-sm" style="flex:1;font-size:12px">Ninguna</button>
+            <button onclick="aplicarFiltroFecha()" class="btn btn-primary btn-sm" style="flex:1;font-size:12px">Aplicar</button>
+          </div>
+          <div id="fecha-checks" style="padding:4px 0"></div>
         </div>
       </div>
       <div class="g4" id="es-kpis" style="margin-bottom:16px"></div>
       <div class="card" style="margin-bottom:12px">
-        <h3>Evolución del puntaje (%)</h3>
+        <h3 id="titulo-evol">Evolución del puntaje (%)</h3>
         <div style="position:relative;height:200px">
           <canvas id="c-evol" aria-label="Evolución del puntaje"></canvas>
         </div>
@@ -404,7 +492,7 @@ textarea{resize:vertical;min-height:60px}
         </div>
       </div>
       <div class="card">
-        <h3>Comparativo por áreas</h3>
+        <h3>Promedio por área</h3>
         <div id="c-areas-wrap" style="position:relative;min-height:180px">
           <canvas id="c-areas" aria-label="Comparativo por área"></canvas>
         </div>
@@ -412,6 +500,11 @@ textarea{resize:vertical;min-height:60px}
     </div>
 
   </div><!-- /content -->
+
+  <div style="text-align:center;padding:10px 16px;border-top:0.5px solid var(--border);background:var(--bg2)">
+    <span style="font-size:11px;color:var(--text3);font-weight:500">Auditorías 5S · IMACASA · Departamento de Ingeniería · <strong>v1.0</strong></span>
+  </div>
+
 </div><!-- /app -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -628,7 +721,7 @@ async function cargarDatos(){
       setSyncStatus('ok', 'Conectado ✓ · ' + auditorias.length + ' auditorías');
       renderInicio();
       if(document.getElementById('view-historial').classList.contains('active'))    renderHist();
-      if(document.getElementById('view-estadisticas').classList.contains('active')){ fillSecEst(); renderEst(); }
+      if(document.getElementById('view-estadisticas').classList.contains('active')){ fillSecEst(); poblarFechasEst(); renderEst(); }
     } else {
       setSyncStatus('err', 'Error al cargar: ' + (res.error || 'Sin respuesta'));
     }
@@ -649,7 +742,7 @@ function nav(v){
     document.querySelectorAll('.nav button')[NI[v]].classList.add('active');
   if(v === 'inicio')       renderInicio();
   if(v === 'historial')    renderHist();
-  if(v === 'estadisticas'){ fillSecEst(); renderEst(); }
+  if(v === 'estadisticas'){ fillSecEst(); poblarFechasEst(); renderEst(); }
   if(v === 'nueva')        resetNueva();
 }
 
@@ -696,12 +789,17 @@ function renderInicio(){
    NUEVA AUDITORÍA
 ═══════════════════════════════════════════════════════ */
 function resetNueva(){
-  ['paso1','paso2','paso3'].forEach((p,i) =>
+  ['paso1','paso2','paso25','paso3'].forEach((p,i) =>
     document.getElementById(p).style.display = i===0 ? 'block' : 'none');
   fillSecs(); fillAreas(); showCLInfo();
   document.getElementById('p1-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('p1-auditor').value = '';
   document.getElementById('p1-notas').value = '';
+  ['com-general','com-responsable'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  limpiarFirma();
   cur = null; curCL = []; curSTab = 0;
 }
 
@@ -752,6 +850,54 @@ function goEval(){
 function goP1(){
   document.getElementById('paso1').style.display = 'block';
   document.getElementById('paso2').style.display = 'none';
+}
+
+function irComentarios(){
+  // Cambio 2 — validar preguntas sin responder
+  const sinResp = cur.scores.map((sc,i) => sc===null ? i : -1).filter(i=>i>=0);
+  if(sinResp.length > 0){
+    // Primera confirmación: mostrar cuáles faltan
+    const porS = SN.map((n,si) => {
+      const faltanEnS = sinResp.filter(i => curCL[i].s === si);
+      return faltanEnS.length ? `${n}: ${faltanEnS.length} pregunta${faltanEnS.length>1?'s':''}` : null;
+    }).filter(Boolean).join('\n');
+
+    const msg = `Hay ${sinResp.length} pregunta${sinResp.length>1?'s':''} sin responder:\n\n${porS}\n\n¿Deseas continuar sin responderlas?`;
+    if(!confirm(msg)) {
+      // Ir a la primera S que tiene preguntas sin responder
+      setSTab(curCL[sinResp[0]].s);
+      return;
+    }
+    // Segunda confirmación
+    if(!confirm('⚠️ Confirmación final: la auditoría quedará incompleta.\n\n¿Seguro que deseas guardar con preguntas sin responder?')) {
+      setSTab(curCL[sinResp[0]].s);
+      return;
+    }
+  }
+  // Validar fotos obligatorias antes de pasar
+  const pend = fotosPend();
+  if(pend.length > 0){
+    const lista = pend.map(({i}) => (i+1) + '. ' + curCL[i].txt.slice(0,55) + '…').join('\n');
+    alert('Las siguientes preguntas con "No" necesitan foto:\n\n' + lista);
+    setSTab(curCL[pend[0].i].s);
+    return;
+  }
+  mostrarPaso25();
+}
+
+function volverEval(){
+  document.getElementById('paso25').style.display = 'none';
+  document.getElementById('paso2').style.display  = 'block';
+  window.scrollTo(0,0);
+}
+
+// Inicializar firma cuando se muestra el paso 25
+function mostrarPaso25(){
+  document.getElementById('paso2').style.display  = 'none';
+  document.getElementById('paso25').style.display = 'block';
+  window.scrollTo(0,0);
+  // Inicializar canvas DESPUÉS de que el DOM sea visible
+  setTimeout(() => initFirma(), 80);
 }
 
 function fotosPend(){
@@ -880,19 +1026,116 @@ function handlePhoto(e, source){
 }
 function delPhoto(gi,pi){ cur.photos[gi].splice(pi,1); renderItems(); updateFotoBanner(); renderStabs(); }
 
-async function guardar(){
-  // Validar fotos obligatorias
-  const pend = fotosPend();
-  if(pend.length > 0){
-    const lista = pend.map(({i}) => (i+1) + '. ' + curCL[i].txt.slice(0,55) + '…').join('\n');
-    alert('Las siguientes preguntas con "No" necesitan foto antes de guardar:\n\n' + lista);
-    setSTab(curCL[pend[0].i].s);
-    return;
+/* ═══════════════════════════════════════════════════════
+   FIRMA DIGITAL — Canvas con soporte táctil y mouse
+═══════════════════════════════════════════════════════ */
+let firmaActiva = false;
+let firmaUltX = 0, firmaUltY = 0;
+let firmaCtx = null;
+
+function initFirma(){
+  const canvas = document.getElementById('firma-canvas');
+  if(!canvas || canvas._firmaInited) return;
+  canvas._firmaInited = true;
+
+  // Ajustar resolución real del canvas al tamaño CSS
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+
+  firmaCtx = canvas.getContext('2d');
+  firmaCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  firmaCtx.strokeStyle = '#1a1d23';
+  firmaCtx.lineWidth   = 2.2;
+  firmaCtx.lineCap     = 'round';
+  firmaCtx.lineJoin    = 'round';
+
+  // Fondo blanco explícito (importante para exportar como JPG legible)
+  firmaCtx.fillStyle = '#ffffff';
+  firmaCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+  function getPosRelativa(e, canvas){
+    const r   = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return {
+      x: (src.clientX - r.left) * (canvas.offsetWidth  > 0 ? 1 : 1),
+      y: (src.clientY - r.top)  * (canvas.offsetHeight > 0 ? 1 : 1),
+    };
   }
+
+  function iniciar(e){
+    e.preventDefault();
+    firmaActiva = true;
+    const pos = getPosRelativa(e, canvas);
+    firmaUltX = pos.x; firmaUltY = pos.y;
+    firmaCtx.beginPath();
+    firmaCtx.moveTo(firmaUltX, firmaUltY);
+  }
+  function dibujar(e){
+    if(!firmaActiva) return;
+    e.preventDefault();
+    const pos = getPosRelativa(e, canvas);
+    firmaCtx.lineTo(pos.x, pos.y);
+    firmaCtx.stroke();
+    firmaUltX = pos.x; firmaUltY = pos.y;
+  }
+  function terminar(e){ firmaActiva = false; }
+
+  // Touch events (celular/tablet)
+  canvas.addEventListener('touchstart',  iniciar,   { passive:false });
+  canvas.addEventListener('touchmove',   dibujar,   { passive:false });
+  canvas.addEventListener('touchend',    terminar,  { passive:false });
+  // Mouse events (escritorio)
+  canvas.addEventListener('mousedown',   iniciar);
+  canvas.addEventListener('mousemove',   dibujar);
+  canvas.addEventListener('mouseup',     terminar);
+  canvas.addEventListener('mouseleave',  terminar);
+}
+
+function limpiarFirma(){
+  const canvas = document.getElementById('firma-canvas');
+  if(!canvas) return;
+  if(!firmaCtx){
+    firmaCtx = canvas.getContext('2d');
+    firmaCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  firmaCtx.fillStyle = '#ffffff';
+  firmaCtx.fillRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+  canvas._firmaInited = false; // permite re-inicializar si cambia tamaño
+}
+
+function firmaEstaVacia(){
+  const canvas = document.getElementById('firma-canvas');
+  if(!canvas) return true;
+  const ctx  = canvas.getContext('2d');
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  // Si todos los píxeles son blancos (255,255,255) la firma está vacía
+  for(let i = 0; i < data.length; i += 4){
+    if(data[i] < 250 || data[i+1] < 250 || data[i+2] < 250) return false;
+  }
+  return true;
+}
+
+function obtenerFirmaBase64(){
+  const canvas = document.getElementById('firma-canvas');
+  if(!canvas || firmaEstaVacia()) return null;
+  return canvas.toDataURL('image/png');
+}
+
+async function guardar(){
+  // Las validaciones de fotos y preguntas sin responder
+  // ya se hicieron en irComentarios() — aquí solo guardamos
 
   const p  = pct(cur);
   const bS = pctByS(cur.scores, curCL);
   const nosList = cur.scores.map((sc,i) => sc===0 ? i : -1).filter(i=>i>=0);
+
+  // Recoger comentarios y firma del paso 25
+  const comentarios = {
+    general:     document.getElementById('com-general')?.value.trim()    || '',
+    responsable: document.getElementById('com-responsable')?.value.trim() || '',
+  };
+  const firmaBase64 = obtenerFirmaBase64(); // null si no firmó
 
   const btnG = document.getElementById('btn-guardar');
   btnG.disabled = true;
@@ -901,18 +1144,19 @@ async function guardar(){
   btnG.innerHTML = '<i class="ti ti-loader"></i> Guardando datos...';
 
   const payload = {
-    action:    'guardar',
-    id:        cur.id,
-    fecha:     cur.fecha,
-    auditor:   cur.auditor,
-    seccion:   cur.seccion,
-    area:      cur.area,
-    pctTotal:  p,
-    pctSeiri:  bS[0],
-    pctSeiton: bS[1],
-    pctSeiso:  bS[2],
-    notas:     cur.notas,
-    preguntas: curCL.map((c,i) => ({
+    action:      'guardar',
+    id:          cur.id,
+    fecha:       cur.fecha,
+    auditor:     cur.auditor,
+    seccion:     cur.seccion,
+    area:        cur.area,
+    pctTotal:    p,
+    pctSeiri:    bS[0],
+    pctSeiton:   bS[1],
+    pctSeiso:    bS[2],
+    notas:       cur.notas,
+    comentarios: comentarios,
+    preguntas:   curCL.map((c,i) => ({
       s:         c.s,
       txt:       c.txt,
       respuesta: cur.scores[i]===1 ? 'Si' : cur.scores[i]===0 ? 'No' : '',
@@ -941,7 +1185,6 @@ async function guardar(){
   const folderId = res.folderId || '';
 
   // ── PASO 2: Enviar fotos UNA POR UNA ──
-  // Contar total de fotos para mostrar progreso
   const todasFotos = [];
   curCL.forEach((c,i) => {
     const fotos = cur.photos[i] || [];
@@ -965,8 +1208,25 @@ async function guardar(){
         });
       } catch(e) {
         console.warn('Error subiendo foto p'+numPregunta+'_f'+numFoto+':', e.message);
-        // No bloqueamos — si una foto falla, seguimos con las demás
       }
+    }
+  }
+
+  // ── PASO 2b: Guardar firma en Drive si existe ──
+  if(firmaBase64){
+    btnG.innerHTML = '<i class="ti ti-loader"></i> Guardando firma...';
+    try {
+      await apiPost({
+        action:        'guardarFoto',
+        auditoriaId:   cur.id,
+        folderId:      folderId,
+        numPregunta:   0,
+        numFoto:       1,
+        nombreArchivo: 'FIRMA_' + (comentarios.responsable.replace(/\s+/g,'_') || 'responsable') + '.png',
+        foto:          firmaBase64,
+      });
+    } catch(e) {
+      console.warn('Error guardando firma:', e.message);
     }
   }
 
@@ -974,9 +1234,9 @@ async function guardar(){
   btnG.innerHTML = '<i class="ti ti-device-floppy"></i> Guardar auditoría';
 
   // ── PASO 3: Mostrar resultado ──
-  document.getElementById('p3-pct').textContent    = p;
-  document.getElementById('p3-pct').style.color    = colPct(p);
-  document.getElementById('p3-nivel').textContent  = lvl(p);
+  document.getElementById('p3-pct').textContent     = p;
+  document.getElementById('p3-pct').style.color     = colPct(p);
+  document.getElementById('p3-nivel').textContent   = lvl(p);
   document.getElementById('p3-resumen').textContent = cur.seccion + ' / ' + cur.area + ' · ' + cur.fecha + ' · ' + cur.auditor;
   document.getElementById('p3-byS').innerHTML = SN.map((n,i) => `
     <div class="met" style="border-top:3px solid ${SC[i]}">
@@ -991,8 +1251,23 @@ async function guardar(){
          ${nosList.map(i=>`<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">${i+1}. ${curCL[i].txt}</div>`).join('')}
        </div>` : '';
 
-  document.getElementById('paso2').style.display = 'none';
-  document.getElementById('paso3').style.display = 'block';
+  // Mostrar comentarios si los hay
+  const tieneComentarios = Object.values(comentarios).some(v => v.length > 0);
+  const elCom = document.getElementById('p3-comentarios');
+  if(elCom){
+    elCom.innerHTML = tieneComentarios ? `
+      <div class="card" style="border-left:4px solid var(--blue)">
+        <h3 style="margin-bottom:12px"><i class="ti ti-message-dots"></i> Comentarios de cierre</h3>
+        ${comentarios.general     ? `<div style="margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Comentario general</span><p style="font-size:13px;margin-top:3px">${comentarios.general}</p></div>` : ''}
+        ${comentarios.acciones    ? `<div style="margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Acciones a tomar</span><p style="font-size:13px;margin-top:3px">${comentarios.acciones}</p></div>` : ''}
+        ${comentarios.compromisos ? `<div style="margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Compromisos del área</span><p style="font-size:13px;margin-top:3px">${comentarios.compromisos}</p></div>` : ''}
+        ${comentarios.responsable ? `<div><span style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Responsable del área</span><p style="font-size:13px;margin-top:3px">${comentarios.responsable}</p></div>` : ''}
+      </div>` : '';
+  }
+
+  document.getElementById('paso25').style.display = 'none';
+  document.getElementById('paso3').style.display  = 'block';
+  window.scrollTo(0,0);
   cargarDatos();
 }
 
@@ -1067,12 +1342,185 @@ function fillAreasEst(){
     (sv ? PLANTA.find(s=>s.nombre===sv)?.areas||[] : [])
     .map(x => `<option value="${x}">${x}</option>`).join('');
 }
-function renderEst(){
+/* ═══════════════════════════════════════════════════════
+   FILTRO DE FECHA ESTILO EXCEL
+═══════════════════════════════════════════════════════ */
+let fechasSeleccionadas = new Set(); // conjunto de fechas 'YYYY-MM-DD' activas
+let fechasDisponibles   = [];        // todas las fechas con auditorías (según filtros sec/area)
+
+const MESES_LARGO  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_CORTO  = ['Ene','Feb','Mar','Abr','May','Jun',
+                       'Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function fmtFecha(f){
+  // 'YYYY-MM-DD' → 'Jul 16'
+  if(!f) return '—';
+  const p = f.split('-');
+  if(p.length < 3) return f;
+  return MESES_CORTO[parseInt(p[1],10)-1] + ' ' + parseInt(p[2],10);
+}
+function fmtFechaLarga(f){
+  // 'YYYY-MM-DD' → '16 de Julio 2026'
+  if(!f) return '—';
+  const p = f.split('-');
+  if(p.length < 3) return f;
+  return parseInt(p[2],10) + ' de ' + MESES_LARGO[parseInt(p[1],10)-1] + ' ' + p[0];
+}
+function getMesAnio(f){
+  // 'YYYY-MM-DD' → 'Julio 2026'
+  const p = f.split('-');
+  return MESES_LARGO[parseInt(p[1],10)-1] + ' ' + p[0];
+}
+function getMesKey(f){
+  // 'YYYY-MM-DD' → 'YYYY-MM' para agrupar
+  return f.slice(0,7);
+}
+
+function toggleFechaDropdown(){
+  const dd  = document.getElementById('fecha-dropdown');
+  const ico = document.getElementById('fecha-chevron');
+  const open = dd.style.display !== 'none';
+  dd.style.display  = open ? 'none' : 'block';
+  ico.className     = open ? 'ti ti-chevron-down' : 'ti ti-chevron-up';
+  if(!open) construirCheckboxes();
+}
+
+function cerrarFechaDropdown(e){
+  const dd  = document.getElementById('fecha-dropdown');
+  const btn = document.getElementById('btn-fecha-filtro');
+  if(dd && btn && !dd.contains(e.target) && !btn.contains(e.target)){
+    dd.style.display = 'none';
+    document.getElementById('fecha-chevron').className = 'ti ti-chevron-down';
+  }
+}
+
+function construirCheckboxes(){
+  // Agrupar fechasDisponibles por mes/año
+  const grupos = {};
+  fechasDisponibles.forEach(f => {
+    const mk = getMesKey(f);
+    if(!grupos[mk]) grupos[mk] = [];
+    grupos[mk].push(f);
+  });
+  const mks = Object.keys(grupos).sort();
+
+  let html = '';
+  mks.forEach(mk => {
+    const fechasDelMes   = grupos[mk];
+    const todasSelMes    = fechasDelMes.every(f => fechasSeleccionadas.has(f));
+    const algunaSelMes   = fechasDelMes.some(f  => fechasSeleccionadas.has(f));
+    const indetermMes    = algunaSelMes && !todasSelMes;
+    const nombreMes      = getMesAnio(fechasDelMes[0]);
+
+    // Encabezado de mes con checkbox
+    html += `<div style="padding:6px 12px 2px;border-top:0.5px solid var(--border)">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text)">
+        <input type="checkbox" data-mes="${mk}" onchange="toggleMes('${mk}',this.checked)"
+          ${todasSelMes?'checked':''} style="width:15px;height:15px;cursor:pointer;accent-color:var(--blue)">
+        ${nombreMes}
+      </label>
+    </div>`;
+
+    // Fechas individuales del mes
+    fechasDelMes.forEach(f => {
+      const sel = fechasSeleccionadas.has(f);
+      html += `<div style="padding:3px 12px 3px 32px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2)">
+          <input type="checkbox" data-fecha="${f}" onchange="toggleFecha('${f}',this.checked)"
+            ${sel?'checked':''} style="width:14px;height:14px;cursor:pointer;accent-color:var(--blue)">
+          ${fmtFechaLarga(f)}
+        </label>
+      </div>`;
+    });
+  });
+
+  document.getElementById('fecha-checks').innerHTML = html || '<div style="padding:12px;font-size:13px;color:var(--text2)">Sin fechas disponibles</div>';
+}
+
+function toggleFecha(f, checked){
+  if(checked) fechasSeleccionadas.add(f);
+  else        fechasSeleccionadas.delete(f);
+  actualizarCheckMes(getMesKey(f));
+}
+
+function toggleMes(mk, checked){
+  const checks = document.querySelectorAll(`[data-fecha]`);
+  checks.forEach(cb => {
+    if(cb.dataset.fecha && cb.dataset.fecha.startsWith(mk)){
+      cb.checked = checked;
+      if(checked) fechasSeleccionadas.add(cb.dataset.fecha);
+      else        fechasSeleccionadas.delete(cb.dataset.fecha);
+    }
+  });
+}
+
+function actualizarCheckMes(mk){
+  const cb = document.querySelector(`[data-mes="${mk}"]`);
+  if(!cb) return;
+  const fechasDelMes = fechasDisponibles.filter(f => f.startsWith(mk));
+  cb.checked         = fechasDelMes.every(f => fechasSeleccionadas.has(f));
+  cb.indeterminate   = !cb.checked && fechasDelMes.some(f => fechasSeleccionadas.has(f));
+}
+
+function seleccionarTodasFechas(todas){
+  if(todas) fechasDisponibles.forEach(f => fechasSeleccionadas.add(f));
+  else      fechasSeleccionadas.clear();
+  construirCheckboxes();
+}
+
+function aplicarFiltroFecha(){
+  // Cerrar dropdown y actualizar etiqueta del botón
+  document.getElementById('fecha-dropdown').style.display = 'none';
+  document.getElementById('fecha-chevron').className = 'ti ti-chevron-down';
+  actualizarLabelFecha();
+  renderEst();
+}
+
+function actualizarLabelFecha(){
+  const lbl = document.getElementById('fecha-filtro-label');
+  if(fechasSeleccionadas.size === 0 || fechasSeleccionadas.size === fechasDisponibles.length){
+    lbl.textContent = 'Todas las fechas';
+  } else if(fechasSeleccionadas.size === 1){
+    lbl.textContent = fmtFechaLarga([...fechasSeleccionadas][0]);
+  } else {
+    lbl.textContent = fechasSeleccionadas.size + ' fechas seleccionadas';
+  }
+}
+
+function poblarFechasEst(){
   const sv = document.getElementById('es-sec').value;
   const av = document.getElementById('es-area').value;
   let data = [...auditorias];
-  if(sv) data = data.filter(a => a.seccion===sv);
-  if(av) data = data.filter(a => a.area===av);
+  if(sv) data = data.filter(a => a.seccion === sv);
+  if(av) data = data.filter(a => a.area    === av);
+
+  const nuevas = [...new Set(data.map(a => a.fecha))].sort();
+
+  // Si cambian las fechas disponibles, reiniciar selección a "todas"
+  const cambiaron = JSON.stringify(nuevas) !== JSON.stringify(fechasDisponibles);
+  fechasDisponibles = nuevas;
+  if(cambiaron) {
+    fechasSeleccionadas = new Set(nuevas); // por defecto todas seleccionadas
+    actualizarLabelFecha();
+  }
+}
+
+function renderEst(){
+  const sv = document.getElementById('es-sec').value;
+  const av = document.getElementById('es-area').value;
+
+  // Fechas activas: si todas seleccionadas o ninguna → no filtrar
+  const todasActivas = fechasSeleccionadas.size === 0 ||
+                       fechasSeleccionadas.size === fechasDisponibles.length;
+
+  // ── Filtrar datos ──
+  let data = [...auditorias].sort((a,b) => a.fecha.localeCompare(b.fecha));
+  if(sv) data = data.filter(a => a.seccion === sv);
+  if(av) data = data.filter(a => a.area    === av);
+  if(!todasActivas) data = data.filter(a => fechasSeleccionadas.has(a.fecha));
+
+  // ── KPIs ──
   const pcts = data.map(a => a.pctTotal);
   const avg  = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : 0;
   const best = pcts.length ? Math.max(...pcts) : 0;
@@ -1082,56 +1530,122 @@ function renderEst(){
     <div class="met"><div class="met-v" style="color:${colPct(avg)}">${avg}%</div><div class="met-l">Promedio</div></div>
     <div class="met"><div class="met-v" style="color:${colPct(best)}">${best}%</div><div class="met-l">Máximo</div></div>
     <div class="met"><div class="met-v" style="color:${colPct(wrst)}">${wrst}%</div><div class="met-l">Mínimo</div></div>`;
+
   if(cEvol){ cEvol.destroy(); cEvol=null; }
-  if(cS_)  { cS_.destroy();  cS_=null;  }
+  if(cS_)  { cS_.destroy();  cS_=null;   }
   if(cAreas){ cAreas.destroy(); cAreas=null; }
   if(!data.length) return;
-  cEvol = new Chart(document.getElementById('c-evol'), {
-    type: 'line',
-    data: {
-      labels: data.map(a => a.fecha.slice(5) + ' ' + a.area.split(' ')[0]),
-      datasets: [{
-        label:'%', data: pcts,
-        borderColor:'#3266ad', backgroundColor:'rgba(50,102,173,.08)',
-        tension:.3, pointRadius:5, pointBackgroundColor:'#3266ad', borderWidth:2
-      }]
-    },
-    options: { responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } } }
-  });
+
+  // ── GRÁFICA 1: Evolución ──
+  if(av){
+    // Área seleccionada → línea de evolución en el tiempo
+    document.getElementById('titulo-evol').textContent = 'Evolución del puntaje — ' + av;
+    cEvol = new Chart(document.getElementById('c-evol'), {
+      type: 'line',
+      data: {
+        labels:   data.map(a => fmtFecha(a.fecha)),
+        datasets: [{
+          label:'%', data: pcts,
+          borderColor:'#3266ad', backgroundColor:'rgba(50,102,173,.08)',
+          tension:.3, pointRadius:5, pointBackgroundColor:'#3266ad', borderWidth:2
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{ callbacks:{
+            title: items => fmtFechaLarga(data[items[0].dataIndex].fecha) + ' — ' + data[items[0].dataIndex].auditor,
+            label: item  => ' Puntaje: ' + item.raw + '%'
+          }}
+        },
+        scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } }
+      }
+    });
+  } else {
+    // Sin área → barras de promedio por área ordenadas de mayor a menor
+    document.getElementById('titulo-evol').textContent = 'Promedio por área' + (sv?' — '+sv:'');
+    const am = {};
+    data.forEach(a => { if(!am[a.area]) am[a.area]=[]; am[a.area].push(a.pctTotal); });
+    // Ordenar de mayor a menor
+    const aOrden = Object.keys(am)
+      .map(k => ({ area:k, val:Math.round(am[k].reduce((s,v)=>s+v,0)/am[k].length) }))
+      .sort((a,b) => b.val - a.val);
+    cEvol = new Chart(document.getElementById('c-evol'), {
+      type:'bar',
+      data:{
+        labels:   aOrden.map(x => x.area),
+        datasets: [{ label:'%', data: aOrden.map(x => x.val),
+          backgroundColor: aOrden.map(x => bgPct(x.val)),
+          borderColor:     aOrden.map(x => colPct(x.val)), borderWidth:2 }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: item=>' Promedio: '+item.raw+'%' } } },
+        scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } }
+      }
+    });
+  }
+
+  // ── GRÁFICA 2: Promedio por S ──
   const avgS = SN.map((_,si) => {
     const vs = data.map(a => [a.pctSeiri,a.pctSeiton,a.pctSeiso][si]);
     return vs.length ? Math.round(vs.reduce((a,b)=>a+b,0)/vs.length) : 0;
   });
+  // Ordenar Seiri/Seiton/Seiso de mayor a menor
+  const sOrden = SNC.map((n,i) => ({n, val:avgS[i], bg:SCB[i], bc:SC[i]}))
+                    .sort((a,b) => b.val - a.val);
   cS_ = new Chart(document.getElementById('c-s'), {
-    type: 'bar',
-    data: {
-      labels: SNC,
-      datasets: [{ label:'%', data:avgS, backgroundColor:SCB, borderColor:SC, borderWidth:2 }]
+    type:'bar',
+    data:{
+      labels: sOrden.map(x => x.n),
+      datasets:[{ label:'%', data: sOrden.map(x => x.val),
+        backgroundColor: sOrden.map(x => x.bg),
+        borderColor:     sOrden.map(x => x.bc), borderWidth:2 }]
     },
-    options: { responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } } }
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: item=>' Promedio: '+item.raw+'%' } } },
+      scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } }
+    }
   });
-  const am = {};
-  data.forEach(a => { const k=a.seccion+'/'+a.area; if(!am[k]) am[k]=[]; am[k].push(a.pctTotal); });
-  const labs = Object.keys(am);
-  const vals = labs.map(k => Math.round(am[k].reduce((a,b)=>a+b,0)/am[k].length));
-  const h = Math.max(labs.length * 44 + 80, 180);
+
+  // ── GRÁFICA 3: Promedio por área — ordenado de mayor a menor ──
+  const bm = {};
+  data.forEach(a => { if(!bm[a.area]) bm[a.area]=[]; bm[a.area].push(a.pctTotal); });
+  const bOrden = Object.keys(bm)
+    .map(k => ({
+      area: k,
+      val:  Math.round(bm[k].reduce((s,v)=>s+v,0)/bm[k].length),
+      cnt:  bm[k].length
+    }))
+    .sort((a,b) => b.val - a.val); // mayor a menor
+
+  const h = Math.max(bOrden.length * 48 + 80, 180);
   document.getElementById('c-areas-wrap').style.height = h + 'px';
   cAreas = new Chart(document.getElementById('c-areas'), {
-    type: 'bar',
-    data: {
-      labels: labs,
-      datasets: [{ label:'%', data:vals,
-        backgroundColor: vals.map(v => bgPct(v)),
-        borderColor:     vals.map(v => colPct(v)),
-        borderWidth: 2 }]
+    type:'bar',
+    data:{
+      labels:   bOrden.map(x => x.area),
+      datasets: [{
+        label:'Promedio %', data: bOrden.map(x => x.val),
+        backgroundColor: bOrden.map(x => bgPct(x.val)),
+        borderColor:     bOrden.map(x => colPct(x.val)), borderWidth:2
+      }]
     },
-    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{ x:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } } }
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{
+          label: item => {
+            const x = bOrden[item.dataIndex];
+            return ' Promedio: '+x.val+'%  ('+x.cnt+' auditoría'+(x.cnt>1?'s':'')+')';
+          }
+        }}
+      },
+      scales:{ x:{ min:0, max:100, ticks:{ callback:v=>v+'%' } } }
+    }
   });
 }
 
@@ -1141,7 +1655,9 @@ function renderEst(){
 window.addEventListener('DOMContentLoaded', () => {
   fillSecs(); fillAreas(); showCLInfo();
   document.getElementById('p1-fecha').value = new Date().toISOString().split('T')[0];
-  document.getElementById('es-sec').addEventListener('change', () => { fillAreasEst(); renderEst(); });
+  document.getElementById('es-sec').addEventListener('change', () => { fillAreasEst(); poblarFechasEst(); renderEst(); });
+  document.getElementById('es-area').addEventListener('change', () => { poblarFechasEst(); renderEst(); });
+  document.addEventListener('click', cerrarFechaDropdown);
   cargarDatos();
 });
 </script>
