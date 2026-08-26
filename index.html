@@ -495,7 +495,7 @@ textarea{resize:vertical;min-height:60px}
   </div><!-- /content -->
 
   <div style="text-align:center;padding:10px 16px;border-top:0.5px solid var(--border);background:var(--bg2)">
-    <span style="font-size:11px;color:var(--text3);font-weight:500">Auditorías 5S · IMACASA · Departamento de Ingeniería · <strong>v1.1</strong></span>
+    <span style="font-size:11px;color:var(--text3);font-weight:500">Auditorías 5S · IMACASA · Departamento de Ingeniería · <strong>v1.4</strong></span>
   </div>
 
 </div><!-- /app -->
@@ -571,6 +571,7 @@ const CL = {
     {s:2, txt:'¿Los controles físicos están ordenados?'},
     {s:2, txt:'¿El oasis se encuentra limpio y en buenas condiciones?'},
     {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+    {s:2, txt:'¿Se tiene un plan de limpieza diario/semanal con responsables definidos?'},
   ],
   'MANTTO. ELÉCTRICO': [
     {s:0, txt:'¿Se han eliminado cables, conectores, fusibles y materiales eléctricos obsoletos o dañados?'},
@@ -622,18 +623,112 @@ const CL = {
     {s:2, txt:'¿Los controles físicos están ordenados?'},
     {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
   ],
+
+  // ── CNC / TROQUELERÍA MACHETES / TROQUELERÍA IMPLEMENTOS ──
+  // (mismo checklist para las tres áreas)
+  '_MANTTO_CNC': [
+    {s:0, txt:'¿Se han eliminado repuestos, piezas o herramientas dañadas/obsoletas?'},
+    {s:0, txt:'¿Se han retirado documentos, reportes y formatos antiguos que ya no aplican?'},
+    {s:0, txt:'¿Todos los equipos que hay en el sitio de trabajo tienen un uso definido para las actividades propias del área?'},
+    {s:1, txt:'¿Cada herramienta tiene una ubicación fija, identificada y es fácil de encontrar?'},
+    {s:1, txt:'¿Los estantes y mesas de trabajo se encuentran ordenados?'},
+    {s:1, txt:'¿Toda maquinaria y equipo de trabajo se encuentra identificada y codificada?'},
+    {s:1, txt:'¿La señalización (pasillos y letreros) en el área de trabajo es visible y comprensible para todo el personal?'},
+    {s:1, txt:'¿El producto en proceso y producto terminado se encuentra identificado y ordenado?'},
+    {s:1, txt:'¿Los controles físicos, documentos, formatos y demás archivos están ordenados?'},
+    {s:2, txt:'¿Las máquinas, mesas y el área de trabajo están libres de grasa, polvo, virutas y residuos metálicos/líquidos?'},
+    {s:2, txt:'¿Existe un plan de limpieza diaria/semanal asignado por responsable?'},
+    {s:2, txt:'¿Se cuenta con un lugar definido para colocar los insumos de limpieza?'},
+    {s:2, txt:'¿Las paredes están limpias y en buen estado?'},
+    {s:2, txt:'¿Las ventanas se encuentran limpias?'},
+    {s:2, txt:'¿Está limpio y en buen estado el piso?'},
+    {s:2, txt:'¿Los escritorios y computadoras están limpios y en buenas condiciones?'},
+    {s:2, txt:'¿Los ventiladores están limpios y en buenas condiciones?'},
+    {s:2, txt:'¿Las lámparas están en buen estado?'},
+    {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+  ],
+
+  // ── TROQUELERÍA MACHETES / TROQUELERÍA IMPLEMENTOS ──
+  // (sin pregunta de computadoras)
+  '_MANTTO_TROQ': [
+    {s:0, txt:'¿Se han eliminado repuestos, piezas o herramientas dañadas/obsoletas?'},
+    {s:0, txt:'¿Se han retirado documentos, reportes y formatos antiguos que ya no aplican?'},
+    {s:0, txt:'¿Todos los equipos que hay en el sitio de trabajo tienen un uso definido para las actividades propias del área?'},
+    {s:1, txt:'¿Cada herramienta tiene una ubicación fija, identificada y es fácil de encontrar?'},
+    {s:1, txt:'¿Los estantes y mesas de trabajo se encuentran ordenados?'},
+    {s:1, txt:'¿Toda maquinaria y equipo de trabajo se encuentra identificada y codificada?'},
+    {s:1, txt:'¿La señalización (pasillos y letreros) en el área de trabajo es visible y comprensible para todo el personal?'},
+    {s:1, txt:'¿El producto en proceso y producto terminado se encuentra identificado y ordenado?'},
+    {s:1, txt:'¿Los controles físicos, documentos, formatos y demás archivos están ordenados?'},
+    {s:2, txt:'¿Las máquinas, mesas y el área de trabajo están libres de grasa, polvo, virutas y residuos metálicos/líquidos?'},
+    {s:2, txt:'¿Existe un plan de limpieza diaria/semanal asignado por responsable?'},
+    {s:2, txt:'¿Se cuenta con un lugar definido para colocar los insumos de limpieza?'},
+    {s:2, txt:'¿Las paredes están limpias y en buen estado?'},
+    {s:2, txt:'¿Las ventanas se encuentran limpias?'},
+    {s:2, txt:'¿Está limpio y en buen estado el piso?'},
+    {s:2, txt:'¿Los ventiladores están limpios y en buenas condiciones?'},
+    {s:2, txt:'¿Las lámparas están en buen estado?'},
+    {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+  ],
+
+  // ── CORTE SLITTER ──
+  'CORTE SLITTER': [
+    {s:0, txt:'¿Se han eliminado cuchillas, piezas o herramientas dañadas/obsoletas?'},
+    {s:0, txt:'¿Se han retirado documentos, reportes y formatos antiguos que ya no aplican?'},
+    {s:0, txt:'¿Se ha retirado del área el desperdicio o sobrante de corte?'},
+    {s:0, txt:'¿Todos los equipos que hay en el sitio de trabajo tienen un uso definido para las actividades propias del área?'},
+    {s:1, txt:'¿Cada herramienta tiene una ubicación fija, identificada y es fácil de encontrar?'},
+    {s:1, txt:'¿Los estantes y mesas de trabajo se encuentran ordenados?'},
+    {s:1, txt:'¿Toda maquinaria y equipo de trabajo se encuentra identificada y codificada?'},
+    {s:1, txt:'¿La señalización (pasillos y letreros) en el área de trabajo es visible y comprensible para todo el personal?'},
+    {s:1, txt:'¿El producto en proceso y producto terminado se encuentra identificado y ordenado?'},
+    {s:1, txt:'¿Los cilindros de gas (O₂, N₂) están asegurados en su zona rotulada?'},
+    {s:1, txt:'¿Los controles físicos, documentos, formatos y demás archivos están ordenados?'},
+    {s:2, txt:'¿Las máquinas, mesas y el área de trabajo están libres de grasa, polvo, virutas y residuos metálicos/líquidos?'},
+    {s:2, txt:'¿Las computadoras y equipo electrónico están limpios y en buenas condiciones?'},
+    {s:2, txt:'¿Existe un plan de limpieza diaria/semanal asignado por responsable?'},
+    {s:2, txt:'¿Se cuenta con un lugar definido para colocar los insumos de limpieza?'},
+    {s:2, txt:'¿Las paredes están limpias y en buen estado?'},
+    {s:2, txt:'¿Está limpio y en buen estado el piso?'},
+    {s:2, txt:'¿Los ventiladores están limpios y en buenas condiciones?'},
+    {s:2, txt:'¿Las lámparas están en buen estado?'},
+    {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+  ],
+
+  // ── ALBAÑILERÍA ──
+  'ALBAÑILERÍA': [
+    {s:0, txt:'¿Todo lo almacenado se usa o se usará en un plazo definido?'},
+    {s:0, txt:'¿La bodega está libre de herramienta dañada o inservible?'},
+    {s:0, txt:'¿Está libre de insumos vencidos, endurecidos o dañados?'},
+    {s:0, txt:'¿Está libre de escombro, basura, empaques vacíos y material ajeno?'},
+    {s:1, txt:'¿Cada herramienta tiene una ubicación fija?'},
+    {s:1, txt:'¿Las zonas y estantes están rotulados?'},
+    {s:1, txt:'¿Los pasillos están libres de obstáculos?'},
+    {s:1, txt:'¿Los insumos o producto de uso diario están en una zona más accesible?'},
+    {s:1, txt:'¿Los insumos o producto están ordenados y correctamente identificados?'},
+    {s:2, txt:'¿Los estantes, cajones o mesas están libres de polvo y de residuos?'},
+    {s:2, txt:'¿Existe un plan de limpieza diaria/semanal asignado por responsable?'},
+    {s:2, txt:'¿Las paredes están en buen estado y limpias?'},
+    {s:2, txt:'¿Está limpio y en buen estado el piso?'},
+    {s:2, txt:'¿Las lámparas están en buen estado?'},
+    {s:2, txt:'¿Los controles físicos están ordenados?'},
+    {s:2, txt:'¿Todo el personal usa el equipo de seguridad?'},
+  ],
 };
 ['MONTAJE MACHETES','EMPAQUE MACHETES','CTK','INYECTADO MACHETES','PULIDO MACHETES','ACABADO MACHETES','NIQUELADO MACHETES','FORJA MACHETES',
  'SOLDADURA','TOLVAS Y ESCOBA','CARRETILLAS','MADERA','FORJA IMPLEMENTOS','EMPAQUE IMPLEMENTOS','RECTIFICADO'
 ].forEach(a => CL[a] = CL._PROD);
-CL['CALIDAD - PLANTA'] = CL['CALIDAD - CDI'];
+CL['CALIDAD - PLANTA']          = CL['CALIDAD - CDI'];
+CL['CNC']                        = CL._MANTTO_CNC;
+CL['TROQUELERÍA MACHETES']       = CL._MANTTO_TROQ;
+CL['TROQUELERÍA IMPLEMENTOS']    = CL._MANTTO_TROQ;
 
 function getCL(area){ return (CL[area]||CL._PROD).map((c,i)=>({id:'q'+i,...c})); }
 
 const PLANTA = [
-  {id:'s1', nombre:'Mantenimiento',      areas:['MANTTO. ELÉCTRICO','MANTTO. MECÁNICO']},
+  {id:'s1', nombre:'Mantenimiento',      areas:['MANTTO. ELÉCTRICO','MANTTO. MECÁNICO','CNC','TROQUELERÍA MACHETES','TROQUELERÍA IMPLEMENTOS','ALBAÑILERÍA']},
   {id:'s2', nombre:'Control de Calidad', areas:['CALIDAD - CDI','CALIDAD - PLANTA']},
-  {id:'s3', nombre:'Machetes',  areas:['MONTAJE MACHETES','EMPAQUE MACHETES','CTK','INYECTADO MACHETES','PULIDO MACHETES','ACABADO MACHETES','NIQUELADO MACHETES','FORJA MACHETES']},
+  {id:'s3', nombre:'Machetes',  areas:['MONTAJE MACHETES','EMPAQUE MACHETES','CTK','INYECTADO MACHETES','PULIDO MACHETES','ACABADO MACHETES','NIQUELADO MACHETES','FORJA MACHETES','CORTE SLITTER']},
   {id:'s4', nombre:'Implementos',areas:['SOLDADURA','TOLVAS Y ESCOBA','CARRETILLAS','MADERA','FORJA IMPLEMENTOS','EMPAQUE IMPLEMENTOS','RECTIFICADO']},
 ];
 
@@ -1003,9 +1098,10 @@ function renderItems(){
               <button class="photo-del" onclick="delPhoto(${gi},${pi})">×</button>
             </div>`).join('')}
         </div>
-        <input type="text" placeholder="Observación..." value="${ob}"
-          oninput="cur.obs[${gi}]=this.value" style="font-size:13px;margin-top:8px">
       ` : ''}
+      <input type="text" placeholder="Observación (opcional)..." value="${ob}"
+        oninput="cur.obs[${gi}]=this.value"
+        style="font-size:13px;margin-top:8px;color:var(--text)">
     </div>`;
   }).join('');
 }
